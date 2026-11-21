@@ -10,48 +10,32 @@ Install dependencies
 npm install
 ```
 
-## Run the unit tests from the Command-Line
+## Run the tests
 
-There are two unit test frameworks to choose from, Jest and Mocha.
+The tests run with [Vitest](https://vitest.dev/).
 
-```sh
-npm run test:jest
-```
-
-To run all tests in watch mode
+Run all tests once
 
 ```sh
-npm run test:jest:watch
+npx vitest run
 ```
 
-Mocha
+Run only the approval tests
 
 ```sh
-npm run test:mocha
+npx vitest run test/vitest/approvals.spec.ts
 ```
 
-
-## Run the TextTest fixture from the Command-Line
-
-_You may need to install `ts-node`_
+Run only the 30-day approval test
 
 ```sh
-npx ts-node test/golden-master-text-test.ts
+npx vitest run -t thirtyDays
 ```
 
-Or with number of days as args:
+Run all tests in watch mode, with coverage
+
 ```sh
-npx ts-node test/golden-master-text-test.ts 10
+npm run test:vitest
 ```
 
-You should make sure the command shown above works when you execute it in a terminal before trying to use TextTest (see below).
-
-
-## Run the TextTest approval test that comes with this project
-
-There are instructions in the [TextTest Readme](../texttests/README.md) for setting up TextTest. You will need to specify the Python executable and interpreter in [config.gr](../texttests/config.gr). Uncomment these lines:
-
-    executable:${TEXTTEST_HOME}/python/texttest_fixture.py
-    interpreter:python
-
-
+Do not update the snapshot (`-u`, or `u` in watch mode) unless the change of behaviour is intended.
