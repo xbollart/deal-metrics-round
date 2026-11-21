@@ -17,7 +17,7 @@ The tests run with [Vitest](https://vitest.dev/).
 Run all tests once
 
 ```sh
-npx vitest run
+npm test
 ```
 
 Run only the approval tests
@@ -32,10 +32,16 @@ Run only the 30-day approval test
 npx vitest run -t thirtyDays
 ```
 
-Run all tests in watch mode, with coverage
+Run all tests in watch mode
 
 ```sh
-npm run test:vitest
+npm run test:watch
+```
+
+Run all tests once with a coverage report
+
+```sh
+npm run test:coverage
 ```
 
 Do not update the snapshot (`-u`, or `u` in watch mode) unless the change of behaviour is intended.

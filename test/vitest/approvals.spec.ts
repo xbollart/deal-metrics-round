@@ -1,8 +1,9 @@
-import { execSync } from 'node:child_process';
 import { Item, GildedRose } from '@/gilded-rose';
+import { goldenMaster } from '../golden-master';
 
 /**
- * This test uses Vitest Snapshot, similar to [Jest Snapshot](https://goo.gl/fbAQLP).
+ * These tests use Vitest snapshots: the result is compared to the one stored
+ * in the __snapshots__ folder, and any difference fails the test.
  *
  * There are two test cases here with different styles:
  * <li>"foo" is more similar to the unit test from the 'Java' version
@@ -20,10 +21,7 @@ describe('Gilded Rose Approval', () => {
   });
 
   it('should thirtyDays', () => {
-    const consoleOutput = execSync(
-      'ts-node test/golden-master-text-test.ts 30',
-      { encoding: 'utf-8' }
-    );
+    const consoleOutput = goldenMaster(30);
 
     expect(consoleOutput).toMatchSnapshot();
   });

@@ -1,14 +1,17 @@
 import {defineConfig} from 'vitest/config';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
     globals: true,
     include: ['test/vitest/**/*.{spec,test}.{js,ts}'],
     coverage: {
       provider: 'istanbul',
-      reporter: ['text', 'html', 'lcov']
+      include: ['app/**/*.ts'],
+      reporter: ['text', 'html', 'lcov'],
+      reportOnFailure: true,
     }
   },
 });

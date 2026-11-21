@@ -12,7 +12,11 @@
       "@/*": [
         "app/*"
       ]
-    }
+    },
+    "types": [
+      "node",
+      "vitest/globals"
+    ]
   },
   "exclude": [
     "node_modules"

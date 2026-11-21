@@ -7,7 +7,7 @@ Each step is meant to be done and committed on its own. A step is finished only 
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | Consolidate the tests on Vitest | Not started |
+| 1 | Consolidate the tests on Vitest | Done (2026-11-21) |
 | 2 | Verify and close the test coverage | Not started |
 | 3 | Refactor `updateQuality` | Not started |
 | 4 | Implement Conjured items | Not started |
@@ -61,6 +61,33 @@ Have one test runner, Vitest, with the same coverage as today and no dependency 
 ### Known failing test
 
 `test/vitest/gilded-rose.spec.ts` is a placeholder that fails by design (it expects the name `'fixme'`). It is kept as it is in this step, so `npm test` will report exactly one failure, this one, when the step is done. It is replaced in step 2.
+
+### Outcome (2026-11-21)
+
+All "Done when" checks pass:
+
+- `npm test` runs Vitest 5.1.1 once and exits, with the `'fixme'` placeholder as its only failure.
+- The snapshot file is byte-identical to the one before the step, and the test passes with `CI=1` (no snapshot can be written).
+- `npm run golden-master -- 30` prints output identical to the previous `ts-node` run.
+- `app/gilded-rose.ts` is unchanged.
+- The coverage report now sees the 30-day run: 100% statements, 97.14% branches on `app/gilded-rose.ts` (it was 48.38% and 25.71%). The missed branch is the constructor default on line 16.
+- `npm audit` reports 3 moderate vulnerabilities, all through `rimraf` (it was 14, including 3 critical).
+
+Changes that the tasks above did not spell out:
+
+- **`@types/node` 18 → 26.** Vite 8, which Vitest 5 requires, does not accept the Node 18 typings.
+- **`tsx` replaces `ts-node`** for the command-line run, exposed as `npm run golden-master`. Plain `node` cannot run the script because the imports have no file extension.
+- **The golden master is split in two files.** `test/golden-master.ts` exports the function that builds the report; `test/golden-master-text-test.ts` is the command-line entry point.
+- **`vite-tsconfig-paths` is removed.** Vite resolves the `@/` alias itself with `resolve.tsconfigPaths`.
+- **`vitest.config.ts` is renamed `vitest.config.mts`** to remove a Vite warning about ESM syntax in a CommonJS file.
+- **Coverage is limited to `app/` and printed even when a test fails.** Without that, the failing placeholder hides the report.
+- **`tsconfig.json` declares the `vitest/globals` types.**
+- **The leftover `.nyc_output/` folder is deleted**, along with its `.gitignore` line.
+
+Still open after this step:
+
+- **`tsc` still fails.** The Jest/Mocha collision is gone, but TypeScript 4.9 cannot parse the typings of Vitest 5 and `@types/node` 26. It needs the TypeScript upgrade, which is out of scope here.
+- **`texttest_rig.py` still calls `ts-node`.** It was already broken (wrong path) and is listed for removal in the code review.
 
 ## Step 2 — Verify and close the test coverage
 
