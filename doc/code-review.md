@@ -32,7 +32,7 @@ Files and commands named in the findings have changed:
 | 1.4 Dependencies are far behind | Resolved in steps 1 and 2: five dev dependencies, all on their current major version |
 | 1.5 The npm scripts have gaps | Resolved in steps 1 to 3: `start`, `typecheck`, `test`, `test:watch`, `test:coverage` |
 | 1.6 Strictness is undermined | Partly resolved: the target is `es2022` and `include` is set. `noImplicitAny` stays `false`, because turning it on would flag the `Item` constructor, which the kata forbids changing |
-| 1.7 No linter, formatter or CI | Resolved in step 7: Biome for linting and formatting, and a GitHub Actions workflow (not run yet, since the commits are not pushed) |
+| 1.7 No linter, formatter or CI | Resolved in step 7: Biome for linting and formatting, and a GitHub Actions workflow, which passed on its first run |
 | 1.8 Leftovers from the upstream repository | Resolved: `texttest_rig.py` is deleted and the README is rewritten |
 | 1.9 The upstream TextTest setup adds no coverage | Closed: nothing in the repo refers to TextTest any more |
 

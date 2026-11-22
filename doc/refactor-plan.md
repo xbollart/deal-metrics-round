@@ -610,7 +610,7 @@ Three small points from the same review were fixed on the spot (2026-11-22): the
 
 ### Outcome (2026-11-22)
 
-All "Done when" checks of both parts pass, with one exception noted below for CI.
+All "Done when" checks of both parts pass.
 
 #### Part A — what the code did, and what was decided
 
@@ -652,5 +652,5 @@ Choices made along the way:
 - **A script, not Stryker, for the mutation check.** Stryker was tried first: it failed on the same missing TypeScript interface, and it brought 219 packages and 5 moderate vulnerabilities. It was uninstalled. The script has no dependency.
 - **The formatting pass changed layout only**: import order, quotes, template strings in place of string concatenation, and line wrapping. The `Item` class is byte-identical, the snapshots are unchanged, and all tests pass.
 
-The exception: **the CI workflow has not run yet.** It can only run on GitHub, and the commits are not pushed. Its four steps were reproduced locally from a clean `npm ci` and pass.
+The exception was lifted the same day: **the CI workflow ran on GitHub and passed.** The commits were pushed on 2026-11-22, and the first run passed its four steps (install, type-check, lint, tests with coverage). It reported one warning, that `actions/checkout@v4` and `actions/setup-node@v4` target a deprecated Node version; both were then moved to `v7`.
 
