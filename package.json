@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Gilded Rose kata in TypeScript",
   "scripts": {
-    "compile": "tsc",
+    "start": "tsx app/program.ts",
+    "typecheck": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "e2e-test": "tsx test/golden-master-text-test.ts"
+    "test:coverage": "vitest run --coverage"
   },
   "license": "MIT",
   "private": true,

@@ -1,10 +1,10 @@
-import { Item, GildedRose } from '../app/gilded-rose';
+import { Item, GildedRose } from './gilded-rose';
 
 /**
  * Runs the shop for the given number of days and returns the text report:
  * one block per day, listing every item before that day's update.
  */
-export function goldenMaster(days: number): string {
+export function buildReport(days: number): string {
   const lines: string[] = [];
 
   lines.push("OMGHAI!");

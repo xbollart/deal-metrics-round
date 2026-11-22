@@ -23,7 +23,7 @@ npm test
 Run only the approval tests
 
 ```sh
-npx vitest run test/vitest/approvals.spec.ts
+npx vitest run test/approvals.spec.ts
 ```
 
 Run only the 30-day approval test

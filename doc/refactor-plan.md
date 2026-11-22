@@ -9,9 +9,10 @@ Each step is meant to be done and committed on its own. A step is finished only 
 |---|---|---|
 | 1 | Consolidate the tests on Vitest | Done (2026-11-21) |
 | 2 | Fix the compilation | Done (2026-11-22) |
-| 3 | Verify and close the test coverage | Not started |
-| 4 | Refactor `updateQuality` | Not started |
-| 5 | Implement Conjured items | Not started |
+| 3 | Restructure the program and the test layout | Done (2026-11-22) |
+| 4 | Verify and close the test coverage | Not started |
+| 5 | Refactor `updateQuality` | Not started |
+| 6 | Implement Conjured items | Not started |
 
 ## Step 1 — Consolidate the tests on Vitest
 
@@ -61,7 +62,7 @@ Have one test runner, Vitest, with the same coverage as today and no dependency 
 
 ### Known failing test
 
-`test/vitest/gilded-rose.spec.ts` is a placeholder that fails by design (it expects the name `'fixme'`). It is kept as it is in this step, so `npm test` will report exactly one failure, this one, when the step is done. It is replaced in step 3.
+`test/vitest/gilded-rose.spec.ts` is a placeholder that fails by design (it expects the name `'fixme'`). It is kept as it is in this step, so `npm test` will report exactly one failure, this one, when the step is done. It is replaced in step 4.
 
 ### Outcome (2026-11-21)
 
@@ -69,7 +70,7 @@ All "Done when" checks pass:
 
 - `npm test` runs Vitest 5.1.1 once and exits, with the `'fixme'` placeholder as its only failure.
 - The snapshot file is byte-identical to the one before the step, and the test passes with `CI=1` (no snapshot can be written).
-- `npm run e2e-test -- 30` prints output identical to the previous `ts-node` run.
+- `npm start -- 30` prints output identical to the previous `ts-node` run.
 - `app/gilded-rose.ts` is unchanged.
 - The coverage report now sees the 30-day run: 100% statements, 97.14% branches on `app/gilded-rose.ts` (it was 48.38% and 25.71%). The missed branch is the constructor default on line 16.
 - `npm audit` reports 3 moderate vulnerabilities, all through `rimraf` (it was 14, including 3 critical).
@@ -77,7 +78,7 @@ All "Done when" checks pass:
 Changes that the tasks above did not spell out:
 
 - **`@types/node` 18 → 26.** Vite 8, which Vitest 5 requires, does not accept the Node 18 typings.
-- **`tsx` replaces `ts-node`** for the command-line run, exposed as `npm run e2e-test`. Plain `node` cannot run the script because the imports have no file extension.
+- **`tsx` replaces `ts-node`** for the command-line run, exposed as `npm start`. Plain `node` cannot run the script because the imports have no file extension.
 - **The golden master is split in two files.** `test/golden-master.ts` exports the function that builds the report; `test/golden-master-text-test.ts` is the command-line entry point.
 - **`vite-tsconfig-paths` is removed.** Vite resolves the `@/` alias itself with `resolve.tsconfigPaths`.
 - **`vitest.config.ts` is renamed `vitest.config.mts`** to remove a Vite warning about ESM syntax in a CommonJS file.
@@ -94,7 +95,7 @@ Still open after this step:
 
 ### Goal
 
-Have `npm run compile` type-check the application code, the tests and the config with a current TypeScript version, and pass.
+Have `npm run typecheck` type-check the application code, the tests and the config with a current TypeScript version, and pass.
 
 ### Why now
 
@@ -105,7 +106,7 @@ Have `npm run compile` type-check the application code, the tests and the config
 ### Current state
 
 - `tsc` fails with errors located only in `node_modules`: TypeScript 4.9.5 cannot parse the type definitions of Vitest 5 and `@types/node` 26.
-- `tsc` writes JavaScript files next to the sources even when it reports errors. A run of `npm run compile` leaves `vitest.config.mjs`, `vitest.config.mjs.map` and `.js` files under `app/` and `test/`.
+- `tsc` writes JavaScript files next to the sources even when it reports errors. A run of `npm run typecheck` leaves `vitest.config.mjs`, `vitest.config.mjs.map` and `.js` files under `app/` and `test/`.
 - Those generated files break the test run: Vitest also collects `test/vitest/*.spec.js`, which fail to load, so `npm test` reports 3 failed files instead of 1 until they are deleted.
 - `tsconfig.json` has no `include`, targets `es5`, and sets `noImplicitAny: false`.
 - The `precompile` script calls `rimraf` with unquoted globs, which likely removes nothing.
@@ -124,9 +125,9 @@ Have `npm run compile` type-check the application code, the tests and the config
 
 ### Done when
 
-- `npm run compile` exits without error and writes no file.
+- `npm run typecheck` exits without error and writes no file.
 - `npm test` gives the same result as after step 1: the `'fixme'` placeholder is the only failure, and the snapshot file is unchanged.
-- `npm run e2e-test -- 30` prints the same output as before.
+- `npm start -- 30` prints the same output as before.
 - The runtime behaviour of `app/gilded-rose.ts` is unchanged.
 - `npm audit` reports no vulnerability (the 3 remaining ones come through `rimraf`).
 
@@ -141,10 +142,10 @@ Have `npm run compile` type-check the application code, the tests and the config
 
 All "Done when" checks pass:
 
-- `npm run compile` runs TypeScript 7.0.2, exits without error and writes no file. A deliberately wrong test file was rejected, which confirms the tests are type-checked.
+- `npm run typecheck` runs TypeScript 7.0.2, exits without error and writes no file. A deliberately wrong test file was rejected, which confirms the tests are type-checked.
 - `npm test` gives the same result as after step 1: 2 approval tests pass, the `'fixme'` placeholder is the only failure.
 - The snapshot file and `app/gilded-rose.ts` are byte-identical to before the step.
-- `npm run e2e-test -- 30` prints the same output as before.
+- `npm start -- 30` prints the same output as before.
 - Coverage is unchanged: 100% statements, 97.14% branches, line 16 uncovered.
 - `npm audit` reports 0 vulnerabilities.
 
@@ -162,7 +163,62 @@ What was changed:
 
 No type error was found in the project files, so task 4 needed no change.
 
-## Step 3 — Verify and close the test coverage
+## Step 3 — Restructure the program and the test layout
+
+### Goal
+
+Treat the 30-day report as the program of the project, not as a test helper: put it in `app/` with a real entry point, and simplify the test folder and the npm scripts accordingly.
+
+### Why
+
+- The former `test/golden-master*.ts` files are the only runnable part of the project. They build an inventory, run the shop day by day and print a report, which is what a program does.
+- With a single test runner left, the `test/vitest/` folder level no longer separated anything.
+- The script names `compile` and `e2e-test` did not describe what they did: the first type-checks without compiling, the second runs the program and tests nothing.
+
+### What was done
+
+1. **Moved the report to `app/report.ts`.** It exports `buildReport(days)`, which holds the sample inventory and returns the report text. It was `goldenMaster` in `test/golden-master.ts`.
+2. **Created the entry point `app/program.ts`.** A `main()` function reads the number of days from the command line (2 by default) and prints the report. It was `test/golden-master-text-test.ts`.
+3. **Moved the spec files and the snapshot up to `test/`.** `test/vitest/` no longer exists. The "thirtyDays" test imports `buildReport` from `@/report`.
+4. **Renamed the npm scripts.**
+
+   | Script | Command | Was |
+   |---|---|---|
+   | `start` | `tsx app/program.ts` | `e2e-test` |
+   | `typecheck` | `tsc` | `compile` |
+   | `test` | `vitest run` | unchanged |
+   | `test:watch` | `vitest` | unchanged |
+   | `test:coverage` | `vitest run --coverage` | unchanged |
+
+5. **Updated the references:** the Vitest `include` pattern, and the README command that runs the approval file.
+
+### Resulting layout
+
+```
+app/
+  gilded-rose.ts      Item, GildedRose, updateQuality
+  report.ts           buildReport(days): sample inventory and report text
+  program.ts          main(): command-line entry point
+test/
+  approvals.spec.ts
+  gilded-rose.spec.ts
+  __snapshots__/approvals.spec.ts.snap
+```
+
+### Outcome (2026-11-22)
+
+- `npm run typecheck` exits without error.
+- `npm start` and `npm start -- 30` print output identical to the baselines recorded before step 1.
+- `npm test` is unchanged: 2 approval tests pass, the `'fixme'` placeholder is the only failure.
+- The snapshot file was moved, not regenerated: it is byte-identical. `app/gilded-rose.ts` is unchanged.
+- Coverage on `app/`: `gilded-rose.ts` and `report.ts` at 100% statements, `program.ts` at 0%, 91.66% overall.
+
+Still open after this step:
+
+- **`app/program.ts` is run by no test.** Step 4 decides whether to test it or exclude it from coverage.
+- **The sample inventory is hard-coded in `app/report.ts`.** The snapshot pins it, so it is left as it is until Conjured is implemented in step 6.
+
+## Step 4 — Verify and close the test coverage
 
 ### Goal
 
@@ -172,6 +228,7 @@ Have a coverage report that can be trusted, and tests for every behaviour of `up
 
 - It depends on step 1: the coverage report is only accurate once the "thirtyDays" test runs in-process.
 - With step 2 done, the new tests written here are type-checked.
+- With step 3 done, the tests and the code they exercise are in their final location.
 - The refactor of `updateQuality` relies on the tests to catch regressions, so the gaps have to be closed first.
 
 ### Findings from the coverage analysis (2026-11-21)
@@ -198,7 +255,7 @@ Inputs that never appear in any test, and that no coverage tool reports because 
 ### Tasks
 
 1. **Check the coverage report after step 1.** Run the coverage script and confirm `app/gilded-rose.ts` reports 100% statements. If it does not, fix the setup before going further.
-2. **Replace the placeholder test with named tests per rule** in `test/vitest/gilded-rose.spec.ts`. Each test uses one item and one call to `updateQuality`.
+2. **Replace the placeholder test with named tests per rule** in `test/gilded-rose.spec.ts`. Each test uses one item and one call to `updateQuality`.
    - Normal item: before the sell date, after the sell date, quality 1 before the sell date, quality 0.
    - Aged Brie: before and after the sell date, at quality 49 and 50.
    - Backstage passes: at 11, 10, 6, 5 and 0 days; at quality 48 and 49 with 10 days or less, and with 5 days or less.
@@ -208,7 +265,7 @@ Inputs that never appear in any test, and that no coverage tool reports because 
    - quality above 50 and below 0
    - a Sulfuras item with a quality other than 80
    - another backstage pass name and a lower-case "aged brie"
-4. **Set coverage thresholds** in `vitest.config.ts` (100% statements and branches for `app/`) so a drop fails the test run.
+4. **Set coverage thresholds** in `vitest.config.mts` (100% statements and branches for `app/gilded-rose.ts`) so a drop fails the test run. `app/report.ts` is covered by the "thirtyDays" test, but `app/program.ts`, the command-line entry point created in step 3, is run by no test and shows 0%. Decide here whether to test it or exclude it from coverage.
 5. **Re-run the mutation check** and confirm that no change goes undetected.
 
 ### Done when
@@ -224,16 +281,16 @@ Inputs that never appear in any test, and that no coverage tool reports because 
 - Conjured items. The snapshot keeps pinning their current output until the feature is implemented.
 - Adding a mutation-testing tool to the project. The check is run as a one-off script.
 
-## Step 4 — Refactor `updateQuality`
+## Step 5 — Refactor `updateQuality`
 
 ### Goal
 
-Make the rules of each item category readable in one place, without changing any behaviour, so that Conjured becomes a small addition in step 5.
+Make the rules of each item category readable in one place, without changing any behaviour, so that Conjured becomes a small addition in step 6.
 
 ### Why before Conjured
 
 - In the current code the degradation logic sits in two separate blocks (before and after the sell date). Adding Conjured there means writing the rule twice, in code that this step rewrites anyway.
-- With the behaviour frozen, the snapshot and the tests from step 3 must pass untouched. That is the clearest possible check for a structural change.
+- With the behaviour frozen, the snapshot and the tests from step 4 must pass untouched. That is the clearest possible check for a structural change.
 
 ### Target structure
 
@@ -241,7 +298,7 @@ Make the rules of each item category readable in one place, without changing any
 - A single place that decides the category of an item from its name.
 - Named constants for the three item names, the maximum quality (50) and the backstage thresholds (10 and 5 days).
 - `updateQuality` reduced to a loop that, for each item, picks the category and applies its function.
-- The normal-item rule written with a degradation rate, so that step 5 can express Conjured as "twice the normal rate".
+- The normal-item rule written with a degradation rate, so that step 6 can express Conjured as "twice the normal rate".
 
 ### Tasks
 
@@ -257,12 +314,12 @@ Each task is a separate commit, and the full test suite passes after each one.
 
 - The `Item` class and the `items` property are not altered (requirement of the kata).
 - No test and no snapshot is modified in this step. If one has to change, the refactor has changed behaviour and must be corrected.
-- The behaviour pinned in step 3 for out-of-range inputs is preserved. In particular, a helper that clamps quality to 0–50 would change it (quality 60 on a normal item gives 59 today, not 50).
+- The behaviour pinned in step 4 for out-of-range inputs is preserved. In particular, a helper that clamps quality to 0–50 would change it (quality 60 on a normal item gives 59 today, not 50).
 - Item categories keep being matched on the exact, full name.
 
 ### Done when
 
-- `npm test` passes with no test or snapshot change since step 3.
+- `npm test` passes with no test or snapshot change since step 4.
 - Coverage is still 100% statements and branches on `app/`.
 - The mutation check detects every change.
 - `updateQuality` has no nested condition deeper than two levels, and no item name or threshold appears as an inline literal.
@@ -272,7 +329,7 @@ Each task is a separate commit, and the full test suite passes after each one.
 - Conjured items.
 - Fixing out-of-range inputs or matching categories by partial name. These are behaviour changes and need their own decision.
 
-## Step 5 — Implement Conjured items
+## Step 6 — Implement Conjured items
 
 ### Goal
 
@@ -290,13 +347,13 @@ Implement the one feature the requirements ask for: "Conjured" items degrade in 
 
 ### Tasks
 
-1. **Write the tests first** in `test/vitest/gilded-rose.spec.ts`; they fail until the rule exists.
+1. **Write the tests first** in `test/gilded-rose.spec.ts`; they fail until the rule exists.
    - Before the sell date: (3, 6) becomes (2, 4).
    - After the sell date: (0, 6) becomes (−1, 2).
    - Never below 0: (3, 1) becomes (2, 0), and (0, 3) becomes (−1, 0).
 2. **Add the Conjured category** next to the others, reusing the normal rule with a doubled rate.
 3. **Update the "thirtyDays" snapshot deliberately** and review its diff. Only the "Conjured Mana Cake" lines may change: (3, 6) → (2, 4) → (1, 2) → (0, 0), then quality stays at 0.
-4. **Remove the comment** "this conjured item does not work properly yet" from `test/golden-master-text-test.ts`.
+4. **Remove the comment** "this conjured item does not work properly yet" from `app/report.ts`.
 5. **Re-run coverage and the mutation check.**
 
 ### Done when

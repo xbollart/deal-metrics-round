@@ -1,5 +1,5 @@
 import { Item, GildedRose } from '@/gilded-rose';
-import { goldenMaster } from '../golden-master';
+import { buildReport } from '@/report';
 
 /**
  * These tests use Vitest snapshots: the result is compared to the one stored
@@ -21,7 +21,7 @@ describe('Gilded Rose Approval', () => {
   });
 
   it('should thirtyDays', () => {
-    const consoleOutput = goldenMaster(30);
+    const consoleOutput = buildReport(30);
 
     expect(consoleOutput).toMatchSnapshot();
   });
