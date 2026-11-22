@@ -69,7 +69,7 @@ All "Done when" checks pass:
 
 - `npm test` runs Vitest 5.1.1 once and exits, with the `'fixme'` placeholder as its only failure.
 - The snapshot file is byte-identical to the one before the step, and the test passes with `CI=1` (no snapshot can be written).
-- `npm run golden-master -- 30` prints output identical to the previous `ts-node` run.
+- `npm run e2e-test -- 30` prints output identical to the previous `ts-node` run.
 - `app/gilded-rose.ts` is unchanged.
 - The coverage report now sees the 30-day run: 100% statements, 97.14% branches on `app/gilded-rose.ts` (it was 48.38% and 25.71%). The missed branch is the constructor default on line 16.
 - `npm audit` reports 3 moderate vulnerabilities, all through `rimraf` (it was 14, including 3 critical).
@@ -77,7 +77,7 @@ All "Done when" checks pass:
 Changes that the tasks above did not spell out:
 
 - **`@types/node` 18 → 26.** Vite 8, which Vitest 5 requires, does not accept the Node 18 typings.
-- **`tsx` replaces `ts-node`** for the command-line run, exposed as `npm run golden-master`. Plain `node` cannot run the script because the imports have no file extension.
+- **`tsx` replaces `ts-node`** for the command-line run, exposed as `npm run e2e-test`. Plain `node` cannot run the script because the imports have no file extension.
 - **The golden master is split in two files.** `test/golden-master.ts` exports the function that builds the report; `test/golden-master-text-test.ts` is the command-line entry point.
 - **`vite-tsconfig-paths` is removed.** Vite resolves the `@/` alias itself with `resolve.tsconfigPaths`.
 - **`vitest.config.ts` is renamed `vitest.config.mts`** to remove a Vite warning about ESM syntax in a CommonJS file.
@@ -126,7 +126,7 @@ Have `npm run compile` type-check the application code, the tests and the config
 
 - `npm run compile` exits without error and writes no file.
 - `npm test` gives the same result as after step 1: the `'fixme'` placeholder is the only failure, and the snapshot file is unchanged.
-- `npm run golden-master -- 30` prints the same output as before.
+- `npm run e2e-test -- 30` prints the same output as before.
 - The runtime behaviour of `app/gilded-rose.ts` is unchanged.
 - `npm audit` reports no vulnerability (the 3 remaining ones come through `rimraf`).
 
@@ -144,7 +144,7 @@ All "Done when" checks pass:
 - `npm run compile` runs TypeScript 7.0.2, exits without error and writes no file. A deliberately wrong test file was rejected, which confirms the tests are type-checked.
 - `npm test` gives the same result as after step 1: 2 approval tests pass, the `'fixme'` placeholder is the only failure.
 - The snapshot file and `app/gilded-rose.ts` are byte-identical to before the step.
-- `npm run golden-master -- 30` prints the same output as before.
+- `npm run e2e-test -- 30` prints the same output as before.
 - Coverage is unchanged: 100% statements, 97.14% branches, line 16 uncovered.
 - `npm audit` reports 0 vulnerabilities.
 

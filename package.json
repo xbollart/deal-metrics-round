@@ -7,7 +7,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "golden-master": "tsx test/golden-master-text-test.ts"
+    "e2e-test": "tsx test/golden-master-text-test.ts"
   },
   "license": "MIT",
   "private": true,
