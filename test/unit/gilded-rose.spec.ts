@@ -1,4 +1,4 @@
-import { Item, GildedRose } from '../../app/gilded-rose';
+import { GildedRose, Item } from '../../app/gilded-rose';
 
 const AGED_BRIE = 'Aged Brie';
 const BACKSTAGE = 'Backstage passes to a TAFKAL80ETC concert';

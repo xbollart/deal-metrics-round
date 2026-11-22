@@ -6,14 +6,7 @@
     "noEmit": true,
     "strict": true,
     "noImplicitAny": false,
-    "types": [
-      "node",
-      "vitest/globals"
-    ]
+    "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "app",
-    "test",
-    "vitest.config.mts"
-  ]
+  "include": ["app", "test", "vitest.config.mts"]
 }

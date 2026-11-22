@@ -101,8 +101,7 @@ function updateBackstagePasses(item: Item): void {
 }
 
 // Sulfuras is a legendary item: it never has to be sold and never changes.
-function updateSulfuras(_item: Item): void {
-}
+function updateSulfuras(_item: Item): void {}
 
 // Lowers quality by `rate` per day, and twice as fast once the sell date has passed.
 function degrade(item: Item, rate: number): void {

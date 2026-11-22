@@ -1,4 +1,4 @@
-import { Item, GildedRose } from '../../app/gilded-rose';
+import { GildedRose, Item } from '../../app/gilded-rose';
 
 /**
  * Grid test: runs one day for every combination of item name, sellIn and
@@ -46,18 +46,22 @@ describe('Gilded Rose grid', () => {
 
     for (const name of NAMES) {
       lines.push(name);
-      lines.push('  quality before         |' + qualities.map(column).join(''));
+      lines.push(`  quality before         |${qualities.map(column).join('')}`);
 
       for (const sellIn of range(SELL_IN_FROM, SELL_IN_TO)) {
-        const results = qualities.map(quality => {
+        const results = qualities.map((quality) => {
           const [item] = new GildedRose([new Item(name, sellIn, quality)]).updateQuality();
           return item;
         });
-        const sellInsAfter = [...new Set(results.map(item => item.sellIn))].join('/');
+        const sellInsAfter = [...new Set(results.map((item) => item.sellIn))].join('/');
 
         lines.push(
-          '  sellIn ' + column(sellIn) + ' -> ' + sellInsAfter.padStart(3) + '      |' +
-          results.map(item => column(item.quality)).join('')
+          '  sellIn ' +
+            column(sellIn) +
+            ' -> ' +
+            sellInsAfter.padStart(3) +
+            '      |' +
+            results.map((item) => column(item.quality)).join(''),
         );
       }
 
