@@ -36,11 +36,28 @@ export class GildedRose {
   }
 
   updateQuality() {
+    // Every item is checked before any item is updated, so that a refused
+    // item leaves the whole inventory untouched.
+    for (const item of this.items) {
+      assertWholeNumbers(item);
+    }
     for (const item of this.items) {
       updateItem(item);
     }
 
     return this.items;
+  }
+}
+
+// sellIn counts whole days and quality whole points. With any other value the
+// rules below would give results the requirements forbid, so it is refused.
+function assertWholeNumbers(item: Item): void {
+  for (const field of ['sellIn', 'quality'] as const) {
+    const value: unknown = item[field];
+    if (!Number.isInteger(value)) {
+      const shown = typeof value === 'string' ? `"${value}"` : String(value);
+      throw new Error(`Invalid item "${item.name}": ${field} must be a whole number, got ${shown}`);
+    }
   }
 }
 
@@ -114,11 +131,9 @@ function degrade(item: Item, rate: number): void {
   }
 }
 
-// To be called before the sellIn of the day is lowered. Written as "fewer than
-// days + 1" because the original code did it this way: a sellIn that is not a
-// whole number, such as 10.5, counts as "10 days or less" (see the tests).
+// To be called before the sellIn of the day is lowered.
 function hasAtMostDaysLeft(item: Item, days: number): boolean {
-  return item.sellIn < days + 1;
+  return item.sellIn <= days;
 }
 
 // To be called after the sellIn of the day has been lowered.

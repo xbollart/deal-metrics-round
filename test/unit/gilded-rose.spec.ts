@@ -273,6 +273,65 @@ describe('Gilded Rose', () => {
     });
   });
 
+  // sellIn counts whole days and quality whole points. With other values the
+  // rules would give results the requirements forbid (a quality of 0.5 would
+  // become -0.5, a quality of 49.5 would become 50.5, a quality given as the
+  // text "10" would become "101" for Aged Brie), so the shop refuses them.
+  describe('values that are not whole numbers', () => {
+    const notWholeNumbers: [string, unknown][] = [
+      ['a decimal', 0.5],
+      ['NaN', NaN],
+      ['Infinity', Infinity],
+      ['-Infinity', -Infinity],
+      ['a number given as text', '5'],
+      ['null', null],
+      ['undefined', undefined],
+    ];
+
+    it.each(notWholeNumbers)('rejects a quality that is %s', (_description, quality) => {
+      const gildedRose = new GildedRose([new Item('foo', 5, quality)]);
+
+      expect(() => gildedRose.updateQuality()).toThrow(/^Invalid item "foo": quality must be a whole number, got /);
+    });
+
+    it.each(notWholeNumbers)('rejects a sellIn that is %s', (_description, sellIn) => {
+      const gildedRose = new GildedRose([new Item('foo', sellIn, 10)]);
+
+      expect(() => gildedRose.updateQuality()).toThrow(/^Invalid item "foo": sellIn must be a whole number, got /);
+    });
+
+    it.each([
+      ['Aged Brie', AGED_BRIE],
+      ['Backstage passes', BACKSTAGE],
+      ['Sulfuras', SULFURAS],
+      ['a Conjured item', CONJURED],
+    ])('rejects them for %s too', (_description, name) => {
+      expect(() => new GildedRose([new Item(name, 5, 0.5)]).updateQuality()).toThrow(/quality must be a whole number/);
+      expect(() => new GildedRose([new Item(name, 0.5, 10)]).updateQuality()).toThrow(/sellIn must be a whole number/);
+    });
+
+    it('says which value was refused', () => {
+      expect(() => new GildedRose([new Item('foo', 5, 0.5)]).updateQuality()).toThrow(
+        'Invalid item "foo": quality must be a whole number, got 0.5',
+      );
+      expect(() => new GildedRose([new Item('foo', '5', 10)]).updateQuality()).toThrow(
+        'Invalid item "foo": sellIn must be a whole number, got "5"',
+      );
+    });
+
+    it('updates no item at all when one of them is refused', () => {
+      const valid = new Item('foo', 5, 10);
+      const gildedRose = new GildedRose([valid, new Item('bar', 5, 0.5)]);
+
+      expect(() => gildedRose.updateQuality()).toThrow();
+      expect([valid.sellIn, valid.quality]).toEqual([5, 10]);
+    });
+
+    it('accepts whole numbers outside the 0 to 50 range, as before', () => {
+      expect(afterOneDay('foo', -100, 500)).toEqual([-101, 498]);
+    });
+  });
+
   // These tests record what the code does today with inputs the requirements
   // do not allow or do not describe. They pin the behaviour so that a refactor
   // cannot change it by accident; they do not say it is the desired behaviour.
@@ -296,35 +355,6 @@ describe('Gilded Rose', () => {
       ['"Sulfuras" alone is treated as a normal item', 'Sulfuras', 5, 10, 4, 9],
     ])('%s', (_description, name, sellIn, quality, expectedSellIn, expectedQuality) => {
       expect(afterOneDay(name, sellIn, quality)).toEqual([expectedSellIn, expectedQuality]);
-    });
-
-    // sellIn is meant to be a whole number of days, but Item accepts any value.
-    // The original code compares with "fewer than 11" and "fewer than 6", so
-    // half days count as "10 days or less" and "5 days or less".
-    it.each([
-      ['Backstage passes with 10.5 days left gain 2, as with 10 days', BACKSTAGE, 10.5, 10, 9.5, 12],
-      ['Backstage passes with 5.5 days left gain 3, as with 5 days', BACKSTAGE, 5.5, 10, 4.5, 13],
-    ])('%s', (_description, name, sellIn, quality, expectedSellIn, expectedQuality) => {
-      expect(afterOneDay(name, sellIn, quality)).toEqual([expectedSellIn, expectedQuality]);
-    });
-  });
-
-  // Bug of the original code, now fixed.
-  //
-  // After the concert the quality of a backstage pass must be 0, whatever it
-  // was. The original code computed "quality - quality" instead of setting 0,
-  // which gave NaN when the quality was not a finite number.
-  describe('backstage passes after the concert, whatever their quality was', () => {
-    it.each([
-      ['NaN', NaN],
-      ['Infinity', Infinity],
-      ['-Infinity', -Infinity],
-    ])('a quality of %s drops to 0 (the original code gave NaN)', (_label, quality) => {
-      expect(afterOneDay(BACKSTAGE, 0, quality)).toEqual([-1, 0]);
-    });
-
-    it('a finite quality drops to 0', () => {
-      expect(afterOneDay(BACKSTAGE, 0, 30)).toEqual([-1, 0]);
     });
   });
 });
