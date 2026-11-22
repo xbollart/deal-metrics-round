@@ -78,9 +78,7 @@ function updateBackstagePasses(item: Item): void {
   }
   item.sellIn -= 1;
   if (sellDateHasPassed(item)) {
-    // Drops to 0. Kept as a subtraction because the original code did it this
-    // way, which gives NaN when the quality is NaN or infinite (see the tests).
-    item.quality = item.quality - item.quality;
+    item.quality = MIN_QUALITY;
   }
 }
 

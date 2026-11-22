@@ -430,10 +430,18 @@ The comparison script also tried decimals, `NaN`, infinities, `null`, `undefined
 | `sellIn < 11` and `sellIn < 6`, written as `hasAtMostDaysLeft(item, 10)` and `(item, 5)` | A pass with a decimal sellIn between 10 and 11, or between 5 and 6 | Counts as "10 days or less" (or 5) | Two cases in "current behaviour outside the specified range" |
 | `quality - quality`, not `quality = 0` | A pass after the concert whose quality is `NaN` or infinite | `NaN` instead of 0 | The "known bug" block |
 
-- **The `NaN` result is a bug** of the original code: after the concert the quality should be 0. The tests in the "known bug" block expose it by asserting what the code does today, and a comment says the expected value becomes 0 once the bug is fixed. It is not fixed in this step.
+- **The `NaN` result is a bug** of the original code: after the concert the quality should be 0. Commit `e7b6644` keeps the bug and exposes it with tests that assert what the code did. It is fixed in the next commit (see "Bug fix" below).
 - **6 tests were added** to `test/unit/gilded-rose.spec.ts` for this, which is the only change to a test file in this step. No existing test and no snapshot was modified.
 - **After the correction the comparison shows no difference at all**: 0 of 197,109 one-day cases, 0 of the multi-day sequences, and 0 of the 1,050 unusual values.
 - **The mutation check was run again** on the corrected code: 76 changes, 74 detected, and the same 2 undetectable ones around the empty `updateSulfuras`.
+
+Bug fix, done after the correction (2026-11-22):
+
+- **The bug:** a backstage pass whose quality is `NaN`, infinite or `undefined` kept a `NaN` quality after the concert, instead of dropping to 0.
+- **The tests first:** the three tests that exposed the bug were changed to expect 0, and failed against the code.
+- **The fix:** `item.quality = MIN_QUALITY` replaces `item.quality - item.quality` in `updateBackstagePasses`. The three tests then pass.
+- **This is the only intended difference with the original code.** The comparison script confirms it: 0 differences on the 197,109 whole-number cases and the multi-day sequences, and 24 on the 1,050 unusual values, all of them expired backstage passes with a `NaN`, infinite or `undefined` quality, now at 0.
+- The decimal sellIn behaviour is unchanged and stays pinned.
 
 ## Step 6 — Implement Conjured items
 
@@ -491,7 +499,7 @@ Cover the cases that are still untested after step 4. They are all outside what 
    - `NaN`
    - numbers passed as strings. These would misbehave for Aged Brie, where `+ 1` concatenates instead of adding.
 
-   Already pinned since step 5: a decimal sellIn for a backstage pass, and a `NaN` or infinite quality for a pass after the concert, the latter as a known bug to fix here.
+   Already handled in step 5: a decimal sellIn for a backstage pass is pinned by tests, and a `NaN` or infinite quality for a pass after the concert, which was a bug, is fixed and tested.
 2. **Program arguments.** The end-to-end tests cover `30` and no argument. Not covered:
    - a non-numeric argument: `npm start -- abc` prints only the greeting line, with no error
    - a negative number of days

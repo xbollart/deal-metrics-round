@@ -153,24 +153,21 @@ describe('Gilded Rose', () => {
     });
   });
 
-  // KNOWN BUG, inherited from the original code and not fixed yet.
+  // Bug of the original code, now fixed.
   //
-  // After the concert the quality of a backstage pass should be 0, whatever it
-  // was. The original code computes "quality - quality" instead of setting 0,
-  // which gives NaN when the quality is not a finite number.
-  //
-  // These tests expose the bug by asserting what the code does today. When the
-  // bug is fixed, the expected quality in each of them becomes 0.
-  describe('known bug: backstage passes with a non-finite quality after the concert', () => {
+  // After the concert the quality of a backstage pass must be 0, whatever it
+  // was. The original code computed "quality - quality" instead of setting 0,
+  // which gave NaN when the quality was not a finite number.
+  describe('backstage passes after the concert, whatever their quality was', () => {
     it.each([
       ['NaN', NaN],
       ['Infinity', Infinity],
       ['-Infinity', -Infinity],
-    ])('a quality of %s ends up as NaN instead of 0', (_label, quality) => {
-      expect(afterOneDay(BACKSTAGE, 0, quality)).toEqual([-1, NaN]);
+    ])('a quality of %s drops to 0 (the original code gave NaN)', (_label, quality) => {
+      expect(afterOneDay(BACKSTAGE, 0, quality)).toEqual([-1, 0]);
     });
 
-    it('a finite quality drops to 0, as specified', () => {
+    it('a finite quality drops to 0', () => {
       expect(afterOneDay(BACKSTAGE, 0, 30)).toEqual([-1, 0]);
     });
   });
