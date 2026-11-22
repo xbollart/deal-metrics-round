@@ -10,6 +10,17 @@ export class Item {
   }
 }
 
+const AGED_BRIE = 'Aged Brie';
+const BACKSTAGE_PASSES = 'Backstage passes to a TAFKAL80ETC concert';
+const SULFURAS = 'Sulfuras, Hand of Ragnaros';
+
+const MIN_QUALITY = 0;
+const MAX_QUALITY = 50;
+
+// Backstage passes gain more quality when this many days or fewer are left.
+const BACKSTAGE_DOUBLE_INCREASE_DAYS = 10;
+const BACKSTAGE_TRIPLE_INCREASE_DAYS = 5;
+
 export class GildedRose {
   items: Array<Item>;
 
@@ -19,37 +30,37 @@ export class GildedRose {
 
   updateQuality() {
     for (const item of this.items) {
-      if (item.name !== 'Aged Brie' && item.name !== 'Backstage passes to a TAFKAL80ETC concert') {
-        if (item.quality > 0) {
-          if (item.name !== 'Sulfuras, Hand of Ragnaros') {
+      if (item.name !== AGED_BRIE && item.name !== BACKSTAGE_PASSES) {
+        if (item.quality > MIN_QUALITY) {
+          if (item.name !== SULFURAS) {
             item.quality = item.quality - 1;
           }
         }
       } else {
-        if (item.quality < 50) {
+        if (item.quality < MAX_QUALITY) {
           item.quality = item.quality + 1;
-          if (item.name === 'Backstage passes to a TAFKAL80ETC concert') {
-            if (item.sellIn < 11) {
-              if (item.quality < 50) {
+          if (item.name === BACKSTAGE_PASSES) {
+            if (item.sellIn <= BACKSTAGE_DOUBLE_INCREASE_DAYS) {
+              if (item.quality < MAX_QUALITY) {
                 item.quality = item.quality + 1;
               }
             }
-            if (item.sellIn < 6) {
-              if (item.quality < 50) {
+            if (item.sellIn <= BACKSTAGE_TRIPLE_INCREASE_DAYS) {
+              if (item.quality < MAX_QUALITY) {
                 item.quality = item.quality + 1;
               }
             }
           }
         }
       }
-      if (item.name !== 'Sulfuras, Hand of Ragnaros') {
+      if (item.name !== SULFURAS) {
         item.sellIn = item.sellIn - 1;
       }
       if (item.sellIn < 0) {
-        if (item.name !== 'Aged Brie') {
-          if (item.name !== 'Backstage passes to a TAFKAL80ETC concert') {
-            if (item.quality > 0) {
-              if (item.name !== 'Sulfuras, Hand of Ragnaros') {
+        if (item.name !== AGED_BRIE) {
+          if (item.name !== BACKSTAGE_PASSES) {
+            if (item.quality > MIN_QUALITY) {
+              if (item.name !== SULFURAS) {
                 item.quality = item.quality - 1;
               }
             }
@@ -57,7 +68,7 @@ export class GildedRose {
             item.quality = 0;
           }
         } else {
-          if (item.quality < 50) {
+          if (item.quality < MAX_QUALITY) {
             item.quality = item.quality + 1;
           }
         }
