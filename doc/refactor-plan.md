@@ -13,7 +13,7 @@ Each step is meant to be done and committed on its own. A step is finished only 
 | 4 | Verify and close the test coverage | Done (2026-11-22) |
 | 5 | Refactor `updateQuality` | Done (2026-11-22) |
 | 6 | Implement Conjured items | Done (2026-11-22) |
-| 7 | Test the remaining edge cases and finish the tooling | Not started |
+| 7 | Test the remaining edge cases and finish the tooling | Done (2026-11-22) |
 
 ## Step 1 — Consolidate the tests on Vitest
 
@@ -607,4 +607,50 @@ Three small points from the same review were fixed on the spot (2026-11-22): the
 #### Out of scope
 
 - Any change of behaviour in `app/`.
+
+### Outcome (2026-11-22)
+
+All "Done when" checks of both parts pass, with one exception noted below for CI.
+
+#### Part A — what the code did, and what was decided
+
+| Case | What the code did | Decision |
+|---|---|---|
+| 1. Values that are not whole numbers | Broke its own rules silently: quality 0.5 became −0.5, 49.5 became 50.5, a quality given as the text "10" became "101" for Aged Brie, `NaN` stayed `NaN` | **Changed.** `updateQuality` refuses any item whose sellIn or quality is not a whole number, with an error naming the item, the field and the value |
+| 2. Program arguments | `abc`, `-3` and `10abc` printed only the greeting and exited with success; `2.5` printed days 0 to 3; an empty argument printed day 0 only | **Changed.** An argument that is not made of digits only prints an error message and exits with code 1 |
+| 3. Several days in a row | Nothing to observe | **Tested.** Five sequences, one per category |
+| 4. Shop edge cases | An item listed twice is updated twice a day; items added after the shop was created, and a replaced list, are updated | **Pinned** as it is |
+| 5. Name edge cases | An empty name, a space, or a special name with a space before or after it is a normal item | **Pinned** as it is |
+
+Details of the two changes:
+
+- **Refusing values that are not whole numbers.**
+  - Every item is checked before any item is updated, so a refused item leaves the whole inventory untouched.
+  - Whole numbers outside 0 to 50 are still accepted, with the behaviour pinned in step 4.
+  - The check lives in `app/gilded-rose.ts`, outside the `Item` class, which is byte-identical.
+  - It replaces two things from step 5: the tests that pinned a decimal sellIn for backstage passes, and the fix for a `NaN` quality after the concert. Both inputs are now refused, and `hasAtMostDaysLeft` is back to a plain `sellIn <= days`.
+  - For whole-number inputs the code gives the same results as before this step: 0 differences over 21,901 combinations for each of 9 names.
+- **Refusing an invalid number of days.** Only `app/program.ts` changed. A valid argument and the absence of argument behave as before. `1e1` and ` 3`, which used to be read as 10 and 3, are now refused: the rule is "digits only".
+
+Not handled: a `null` entry in the list of items still fails with a generic `TypeError`, and a very large number of days is not capped.
+
+Tests: 126 in total, up from 87. The unit tests gained the several-days, shop, name and whole-number blocks; the end-to-end tests now check the exit code and the error output, with 7 invalid arguments. The two snapshots are unchanged.
+
+#### Part B — tooling
+
+| Gap | What was done |
+|---|---|
+| 1. Nothing runs automatically | `.github/workflows/ci.yml` runs `npm ci`, the type-check, the linter and the tests with coverage on every push and pull request |
+| 2. No linter or formatter | Biome is added, with `npm run lint` (check only) and `npm run format` (apply fixes). The code was formatted once with it |
+| 3. `noImplicitAny` | **Decision: kept off.** Turning it on would need a comment line inside the `Item` class to exempt its constructor, which bends the rule of the kata |
+| 4. Coverage thresholds on one file | `app/report.ts` has the same 100% thresholds as `app/gilded-rose.ts` |
+| 5. Mutation check outside the repository | `scripts/mutation-check.mjs`, run with `npm run test:mutation`. It tries 87 changes; the unit tests detect 85, and the 2 others are the no-effect ones around the empty `updateSulfuras`, listed in the script |
+
+Choices made along the way:
+
+- **Biome, not ESLint with Prettier.** It is one package for both jobs, and it does not depend on the TypeScript compiler's JavaScript interface, which TypeScript 7 no longer provides.
+- **A script, not Stryker, for the mutation check.** Stryker was tried first: it failed on the same missing TypeScript interface, and it brought 219 packages and 5 moderate vulnerabilities. It was uninstalled. The script has no dependency.
+- **The formatting pass changed layout only**: import order, quotes, template strings in place of string concatenation, and line wrapping. The `Item` class is byte-identical, the snapshots are unchanged, and all tests pass.
+
+The exception: **the CI workflow has not run yet.** It can only run on GitHub, and the commits are not pushed. Its four steps were reproduced locally from a clean `npm ci` and pass.
 

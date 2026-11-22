@@ -9,7 +9,7 @@ This is an analysis only. No fix described here has been applied.
 
 ## Status on 2026-11-22
 
-The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 6 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
+The review below describes the repository as it was at commit `a8ef519`. Since then, all 7 steps of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
 
 Files and commands named in the findings have changed:
 
@@ -32,7 +32,7 @@ Files and commands named in the findings have changed:
 | 1.4 Dependencies are far behind | Resolved in steps 1 and 2: five dev dependencies, all on their current major version |
 | 1.5 The npm scripts have gaps | Resolved in steps 1 to 3: `start`, `typecheck`, `test`, `test:watch`, `test:coverage` |
 | 1.6 Strictness is undermined | Partly resolved: the target is `es2022` and `include` is set. `noImplicitAny` stays `false`, because turning it on would flag the `Item` constructor, which the kata forbids changing |
-| 1.7 No linter, formatter or CI | Open |
+| 1.7 No linter, formatter or CI | Resolved in step 7: Biome for linting and formatting, and a GitHub Actions workflow (not run yet, since the commits are not pushed) |
 | 1.8 Leftovers from the upstream repository | Resolved: `texttest_rig.py` is deleted and the README is rewritten |
 | 1.9 The upstream TextTest setup adds no coverage | Closed: nothing in the repo refers to TextTest any more |
 
@@ -48,7 +48,7 @@ Files and commands named in the findings have changed:
 | 2.4 Bounds applied per step, not enforced | Open: the behaviour is pinned by tests since step 4, including a grid test over 4,845 combinations, but not fixed by the plan |
 | 2.5 Magic numbers | Resolved in step 5: named constants, with thresholds written as 10 and 5 days |
 | 2.6 Small code smells | Resolved in step 5 |
-| 2.7 `Item` constructor parameters are untyped | Open: cannot be fixed without altering `Item` |
+| 2.7 `Item` constructor parameters are untyped | Mitigated in step 7: the class is unchanged, but `updateQuality` now refuses a sellIn or quality that is not a whole number |
 | 2.8 `updateQuality` mutates the items in place | Open: not addressed by the plan |
 
 `app/gilded-rose.ts` was refactored in step 5 without changing its behaviour for whole-number inputs. The line numbers quoted in the findings refer to the original version.
@@ -61,7 +61,7 @@ Files and commands named in the findings have changed:
 | 3.2 All real coverage comes from one 30-day run | Resolved in step 4: the unit tests alone cover `app/gilded-rose.ts` at 100% and detect all 55 mutations |
 | 3.3 Cases the snapshot does not cover | Resolved in step 4 for out-of-range inputs and name variants, which are pinned by tests. Correct Conjured behaviour is tested since step 6 |
 | 3.4 The approval tests are fragile | Resolved: the end-to-end test launches the program as a separate process and reads its output, with no patching of `console.log` or `process.argv` |
-| 3.5 The golden-master script has side effects | Mostly resolved: the report is a function that returns text (`buildReport` in `app/report.ts`). A non-numeric argument to `npm start` is still not rejected |
+| 3.5 The golden-master script has side effects | Resolved: the report is a function that returns text (`buildReport` in `app/report.ts`), and since step 7 the program refuses an invalid number of days with an error message and exit code 1 |
 | 3.6 The three runners repeat the same scenarios | Resolved in step 1 |
 
 Coverage as measured now, on the unit tests alone: 100% statements and branches on `app/gilded-rose.ts` and `app/report.ts`. The end-to-end test runs the program in a separate process, so it does not count towards coverage, and `app/program.ts` is excluded for that reason.
