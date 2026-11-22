@@ -13,6 +13,7 @@ Each step is meant to be done and committed on its own. A step is finished only 
 | 4 | Verify and close the test coverage | Done (2026-11-22) |
 | 5 | Refactor `updateQuality` | Not started |
 | 6 | Implement Conjured items | Not started |
+| 7 | Test the remaining edge cases | Not started |
 
 ## Step 1 — Consolidate the tests on Vitest
 
@@ -328,6 +329,19 @@ Behaviour pinned by the "outside the specified range" tests, for reference in st
 | Sulfuras at any quality | Unchanged |
 | "Backstage passes to a Other concert", "aged brie", "Sulfuras" | Treated as normal items |
 
+### Addition after the step: grid test (2026-11-22)
+
+The "outside the specified range" tests only sample the invalid inputs. A change that affects, say, a backstage pass with negative quality would pass every test of this step. The grid test closes that gap.
+
+- **`test/unit/gilded-rose-grid.spec.ts`** runs one day for every combination of 5 item names, sellIn from −3 to 13 and quality from −3 to 53, which is 4,845 combinations, and compares the results to a snapshot.
+- **The snapshot** is `test/unit/__snapshots__/gilded-rose-grid.spec.ts.snap`: one line per name and starting sellIn, 104 lines in total.
+- **"Conjured Mana Cake" is one of the 5 names.** It is recorded with its current behaviour, that of a normal item.
+
+Checked in a scratch copy of the project:
+
+- A change that only affects out-of-range input (no second increment for a backstage pass with quality at or below 0) passes the 54 rule tests and the end-to-end snapshot, and fails the grid test.
+- The grid test alone detects all 55 changes of the mutation check.
+
 ## Step 5 — Refactor `updateQuality`
 
 ### Goal
@@ -361,6 +375,7 @@ Each task is a separate commit, and the full test suite passes after each one.
 
 - The `Item` class and the `items` property are not altered (requirement of the kata).
 - No test and no snapshot is modified in this step. If one has to change, the refactor has changed behaviour and must be corrected.
+- The grid snapshot in particular must stay byte-identical: it is the proof that no combination of name, sellIn and quality gives a different result.
 - The behaviour pinned in step 4 for out-of-range inputs is preserved. In particular, a helper that clamps quality to 0–50 would change it (quality 60 on a normal item gives 59 today, not 50).
 - Item categories keep being matched on the exact, full name.
 
@@ -400,15 +415,71 @@ Implement the one feature the requirements ask for: "Conjured" items degrade in 
    - Never below 0: (3, 1) becomes (2, 0), and (0, 3) becomes (−1, 0).
 2. **Add the Conjured category** next to the others, reusing the normal rule with a doubled rate.
 3. **Update the "thirtyDays" snapshot deliberately** and review its diff. Only the "Conjured Mana Cake" lines may change: (3, 6) → (2, 4) → (1, 2) → (0, 0), then quality stays at 0.
-4. **Remove the comment** "this conjured item does not work properly yet" from `app/report.ts`.
-5. **Re-run coverage and the mutation check.**
+4. **Update the grid snapshot deliberately** and review its diff. Only the lines of the "Conjured Mana Cake" block may change.
+5. **Remove the comment** "this conjured item does not work properly yet" from `app/report.ts`.
+6. **Re-run coverage and the mutation check.**
 
 ### Done when
 
 - The new Conjured tests pass, and every other test passes unchanged.
-- The snapshot diff contains only "Conjured Mana Cake" lines.
+- The diffs of the "thirtyDays" snapshot and of the grid snapshot contain only "Conjured Mana Cake" lines.
 - Coverage is still 100% on `app/`, and the mutation check detects every change.
 
 ### Open point
 
 How a Conjured item is recognised. The requirements name a category ("Conjured" items), while the existing categories are matched on the exact name. The proposal is to match any name starting with `Conjured`, which covers "Conjured Mana Cake" and any future conjured item. The alternative is the exact name "Conjured Mana Cake" only.
+
+## Step 7 — Test the remaining edge cases
+
+### Goal
+
+Cover the cases that are still untested after step 4. They are all outside what the requirements describe, so each one needs a decision first: accept the current behaviour and pin it with a test, or define a better behaviour and implement it.
+
+### Why last
+
+- None of these cases is needed to refactor `updateQuality` safely or to implement Conjured.
+- Several of them are about input validation, which the requirements do not ask for. Deciding them is easier once the code has its final structure.
+
+### Cases
+
+1. **Unusual value types.** `Item` accepts anything, since its constructor is untyped. Nothing tests:
+   - decimals, such as quality 0.5
+   - `NaN`
+   - numbers passed as strings. These would misbehave for Aged Brie, where `+ 1` concatenates instead of adding.
+2. **Program arguments.** The end-to-end tests cover `30` and no argument. Not covered:
+   - a non-numeric argument: `npm start -- abc` prints only the greeting line, with no error
+   - a negative number of days
+   - a decimal number of days
+3. **Several days in a row at unit level.** Each unit test runs one day. Sequences over many days are covered only by the end-to-end snapshot, for its nine sample items.
+4. **Shop edge cases.**
+   - the same `Item` object listed twice in the inventory
+   - items added to the array after the shop is created
+5. **Name edge cases.**
+   - an empty name
+   - a special name with a trailing space
+
+### Tasks
+
+1. **Observe the current behaviour** of each case and record it in this document. The negative and decimal numbers of days have not been run yet.
+2. **Decide, case by case,** between pinning the current behaviour and changing it. Changing it means rejecting or correcting the input, for example an error message for a non-numeric number of days.
+3. **Write the tests.**
+   - Cases 1, 3, 4 and 5 go in `test/unit/gilded-rose.spec.ts`.
+   - Case 2 goes in `test/e2e/approvals.spec.ts`, since it concerns the program's command line.
+4. **Implement the changes decided in task 2,** if any, each with its test written first.
+5. **Re-run coverage and the mutation check.**
+
+### Constraints
+
+- The `Item` class is not altered (requirement of the kata). Validation of item values, if any is decided, lives outside it.
+- A test that pins a behaviour nobody chose says so, in the same way as the "current behaviour outside the specified range" tests of step 4.
+
+### Done when
+
+- Each of the five cases has at least one test, and this document records the decision taken for it.
+- `npm test` passes, coverage is still 100% on `app/gilded-rose.ts`, and the mutation check detects every change.
+- The 30-day snapshot is unchanged, unless a decision of task 2 changes the report on purpose.
+
+### Out of scope
+
+- The out-of-range combinations of sellIn and quality. They are covered by the grid test added after step 4.
+

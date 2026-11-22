@@ -45,7 +45,7 @@ Files and commands named in the findings have changed:
 | 2.1 Conjured items are missing | Open: step 6 |
 | 2.2 Item types matched by exact, full name | Open: needs a decision (see step 6, open point) |
 | 2.3 `updateQuality` is one nested block | Open: step 5 |
-| 2.4 Bounds applied per step, not enforced | Open: the behaviour is pinned by tests since step 4, not fixed by the plan |
+| 2.4 Bounds applied per step, not enforced | Open: the behaviour is pinned by tests since step 4, including a grid test over 4,845 combinations, but not fixed by the plan |
 | 2.5 Magic numbers | Open: step 5 |
 | 2.6 Small code smells | Open: step 5 |
 | 2.7 `Item` constructor parameters are untyped | Open: cannot be fixed without altering `Item` |

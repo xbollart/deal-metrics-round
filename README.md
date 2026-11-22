@@ -33,8 +33,10 @@ app/
   program.ts       command-line entry point
 test/
   unit/
-    gilded-rose.spec.ts   unit tests of updateQuality
-    report.spec.ts        unit tests of buildReport
+    gilded-rose.spec.ts        unit tests of updateQuality, one per rule
+    gilded-rose-grid.spec.ts   snapshot of updateQuality over a grid of names, sellIn and quality
+    report.spec.ts             unit tests of buildReport
+    __snapshots__/             expected results of the grid test
   e2e/
     approvals.spec.ts     runs the program as a process and checks what it prints
     __snapshots__/        expected output of the 30-day run
@@ -109,7 +111,7 @@ Run the tests whose name matches a text, here the 30-day report
 npx vitest run -t thirtyDays
 ```
 
-Do not update the snapshot (`-u`, or `u` in watch mode) unless the change of behaviour is intended.
+Do not update the snapshots (`-u`, or `u` in watch mode) unless the change of behaviour is intended.
 
 ## Measure the coverage
 
