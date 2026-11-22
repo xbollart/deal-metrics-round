@@ -1,15 +1,5 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Gilded Rose Approval > should foo 1`] = `
-[
-  Item {
-    "name": "foo",
-    "quality": 0,
-    "sellIn": -1,
-  },
-]
-`;
-
 exports[`Gilded Rose Approval > should thirtyDays 1`] = `
 "OMGHAI!
 -------- day 0 --------

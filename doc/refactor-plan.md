@@ -252,10 +252,27 @@ Inputs that never appear in any test, and that no coverage tool reports because 
 - a Sulfuras item with a quality other than 80
 - name variants (another backstage pass, different casing)
 
+### Done ahead of this step (2026-11-22)
+
+The two spec files were given one role each:
+
+- **`test/unit/gilded-rose.spec.ts` holds unit tests**, which state the expected value in the test. The "should foo" snapshot test from the approval file was moved here and rewritten as a plain assertion (`foo`, sellIn 0, quality 0 becomes sellIn −1, quality 0). It replaces the `'fixme'` placeholder, so `npm test` now passes.
+- **`test/e2e/approvals.spec.ts` holds only the "thirtyDays" snapshot test.** The "should foo" entry was removed from the snapshot file; the 30-day data is unchanged.
+
+The files were then moved into one folder per kind: `test/unit/` and `test/e2e/` (the snapshot folder moved with the approval test).
+
+The end-to-end test was then made fully end to end:
+
+- **`test/e2e/approvals.spec.ts` launches `app/program.ts` as a separate process**, the way `npm start` does, and compares what it prints for 30 days to the snapshot. The snapshot file is unchanged. A second test checks the default of 2 days.
+- **`test/unit/report.spec.ts` is new** and tests the layout of the text returned by `buildReport`.
+- **`app/program.ts` is excluded from coverage.** It is exercised by the end-to-end tests, in a process the coverage tool cannot see. This settles the question left open by step 3.
+
+Consequence for this step: the 30-day run no longer counts towards coverage. Measured on the unit tests alone, `app/gilded-rose.ts` is at 87.09% statements and 82.85% branches (lines 34, 39 and 53-57 uncovered), and `app/report.ts` at 100%. The named tests per rule of task 2 are what brings `gilded-rose.ts` back to 100%.
+
 ### Tasks
 
-1. **Check the coverage report after step 1.** Run the coverage script and confirm `app/gilded-rose.ts` reports 100% statements. If it does not, fix the setup before going further.
-2. **Replace the placeholder test with named tests per rule** in `test/gilded-rose.spec.ts`. Each test uses one item and one call to `updateQuality`.
+1. **Check the coverage report.** Run the coverage script and note the starting point for `app/gilded-rose.ts` (87.09% statements on 2026-11-22, from the unit tests alone).
+2. **Add named tests per rule** in `test/unit/gilded-rose.spec.ts`. Each test uses one item and one call to `updateQuality`. The `'fixme'` placeholder is already gone (see "Done ahead of this step").
    - Normal item: before the sell date, after the sell date, quality 1 before the sell date, quality 0.
    - Aged Brie: before and after the sell date, at quality 49 and 50.
    - Backstage passes: at 11, 10, 6, 5 and 0 days; at quality 48 and 49 with 10 days or less, and with 5 days or less.
@@ -265,12 +282,12 @@ Inputs that never appear in any test, and that no coverage tool reports because 
    - quality above 50 and below 0
    - a Sulfuras item with a quality other than 80
    - another backstage pass name and a lower-case "aged brie"
-4. **Set coverage thresholds** in `vitest.config.mts` (100% statements and branches for `app/gilded-rose.ts`) so a drop fails the test run. `app/report.ts` is covered by the "thirtyDays" test, but `app/program.ts`, the command-line entry point created in step 3, is run by no test and shows 0%. Decide here whether to test it or exclude it from coverage.
+4. **Set coverage thresholds** in `vitest.config.mts` (100% statements and branches for `app/gilded-rose.ts`) so a drop fails the test run.
 5. **Re-run the mutation check** and confirm that no change goes undetected.
 
 ### Done when
 
-- `npm test` passes with no failure; the `'fixme'` placeholder is gone.
+- `npm test` passes with no failure.
 - The coverage report shows 100% statements and branches for `app/gilded-rose.ts`.
 - The mutation check detects all 55 changes.
 - `app/gilded-rose.ts` is unchanged.
@@ -347,7 +364,7 @@ Implement the one feature the requirements ask for: "Conjured" items degrade in 
 
 ### Tasks
 
-1. **Write the tests first** in `test/gilded-rose.spec.ts`; they fail until the rule exists.
+1. **Write the tests first** in `test/unit/gilded-rose.spec.ts`; they fail until the rule exists.
    - Before the sell date: (3, 6) becomes (2, 4).
    - After the sell date: (0, 6) becomes (−1, 2).
    - Never below 0: (3, 1) becomes (2, 0), and (0, 3) becomes (−1, 0).

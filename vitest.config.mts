@@ -7,6 +7,9 @@ export default defineConfig({
     coverage: {
       provider: 'istanbul',
       include: ['app/**/*.ts'],
+      // The entry point only runs in the separate process started by the
+      // e2e tests, which the coverage tool cannot see.
+      exclude: ['app/program.ts'],
       reporter: ['text', 'html', 'lcov'],
       reportOnFailure: true,
     }

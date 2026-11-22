@@ -32,10 +32,13 @@ app/
   report.ts        buildReport(days): runs a sample inventory and returns the report text
   program.ts       command-line entry point
 test/
-  approvals.spec.ts     snapshot tests, including the 30-day report
-  gilded-rose.spec.ts   unit tests
-  __snapshots__/        expected output of the snapshot tests
-doc/                    requirements, code review and refactor plan
+  unit/
+    gilded-rose.spec.ts   unit tests of updateQuality
+    report.spec.ts        unit tests of buildReport
+  e2e/
+    approvals.spec.ts     runs the program as a process and checks what it prints
+    __snapshots__/        expected output of the 30-day run
+doc/                      requirements, code review and refactor plan
 ```
 
 ## Run the program
@@ -82,10 +85,22 @@ Run all tests in watch mode (re-runs on every file save, `q` to quit)
 npm run test:watch
 ```
 
+Run only the unit tests
+
+```sh
+npx vitest run test/unit
+```
+
+Run only the end-to-end tests, which launch the program as a separate process
+
+```sh
+npx vitest run test/e2e
+```
+
 Run one test file
 
 ```sh
-npx vitest run test/approvals.spec.ts
+npx vitest run test/e2e/approvals.spec.ts
 ```
 
 Run the tests whose name matches a text, here the 30-day report
@@ -98,7 +113,7 @@ Do not update the snapshot (`-u`, or `u` in watch mode) unless the change of beh
 
 ## Measure the coverage
 
-Run all tests once and print the coverage of `app/`
+Run all tests once and print the coverage of `app/`. Only the unit tests count: the end-to-end tests run the program in a separate process, which the coverage tool cannot see, and `app/program.ts` is excluded for that reason.
 
 ```sh
 npm run test:coverage

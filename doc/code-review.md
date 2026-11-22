@@ -15,7 +15,7 @@ Files and commands named in the findings have changed:
 
 | At the time of the review | Now |
 |---|---|
-| `test/jest/`, `test/mocha/`, `test/vitest/` | `test/` (Vitest only) |
+| `test/jest/`, `test/mocha/`, `test/vitest/` | `test/unit/` and `test/e2e/` (Vitest only) |
 | `test/golden-master-text-test.ts` | `app/report.ts` (the report) and `app/program.ts` (the entry point) |
 | `npx ts-node test/golden-master-text-test.ts` | `npm start` |
 | `npm run compile` | `npm run typecheck` |
@@ -57,14 +57,14 @@ Files and commands named in the findings have changed:
 
 | Finding | Status |
 |---|---|
-| 3.1 The unit tests are placeholders | Partly resolved: the Jest and Mocha ones are deleted. `test/gilded-rose.spec.ts` remains and still fails by design, until step 4 |
+| 3.1 The unit tests are placeholders | Resolved: the Jest and Mocha ones are deleted, and the one in `test/unit/gilded-rose.spec.ts` is replaced by a real unit test. Named tests per rule still come in step 4 |
 | 3.2 All real coverage comes from one 30-day run | Open: step 4 |
 | 3.3 Cases the snapshot does not cover | Open: step 4 |
-| 3.4 The approval tests are fragile | Resolved in step 1: the test calls the report function in-process |
+| 3.4 The approval tests are fragile | Resolved: the end-to-end test launches the program as a separate process and reads its output, with no patching of `console.log` or `process.argv` |
 | 3.5 The golden-master script has side effects | Mostly resolved: the report is a function that returns text (`buildReport` in `app/report.ts`). A non-numeric argument to `npm start` is still not rejected |
 | 3.6 The three runners repeat the same scenarios | Resolved in step 1 |
 
-Coverage as measured now: 100% statements on `app/gilded-rose.ts` and `app/report.ts`, 0% on `app/program.ts`, which no test runs.
+Coverage as measured now, on the unit tests alone: 87.09% statements on `app/gilded-rose.ts` and 100% on `app/report.ts`. The end-to-end test runs the program in a separate process, so it does not count towards coverage, and `app/program.ts` is excluded for that reason.
 
 ## Summary
 
