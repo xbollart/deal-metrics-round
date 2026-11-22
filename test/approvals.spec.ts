@@ -1,5 +1,5 @@
-import { Item, GildedRose } from '@/gilded-rose';
-import { buildReport } from '@/report';
+import { Item, GildedRose } from '../app/gilded-rose';
+import { buildReport } from '../app/report';
 
 /**
  * These tests use Vitest snapshots: the result is compared to the one stored

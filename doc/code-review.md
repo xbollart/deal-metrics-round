@@ -7,6 +7,65 @@
 
 This is an analysis only. No fix described here has been applied.
 
+## Status on 2026-11-22
+
+The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 3 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
+
+Files and commands named in the findings have changed:
+
+| At the time of the review | Now |
+|---|---|
+| `test/jest/`, `test/mocha/`, `test/vitest/` | `test/` (Vitest only) |
+| `test/golden-master-text-test.ts` | `app/report.ts` (the report) and `app/program.ts` (the entry point) |
+| `npx ts-node test/golden-master-text-test.ts` | `npm start` |
+| `npm run compile` | `npm run typecheck` |
+| `jest.config.ts`, `.mocharc.js`, `.nycrc.js`, `texttest_rig.py` | Deleted |
+| `vitest.config.ts` | `vitest.config.mts` |
+
+### Stack findings
+
+| Finding | Status |
+|---|---|
+| 1.1 Installs are not reproducible | Resolved: `package-lock.json` is versioned, and Node is pinned with `engines` and `.nvmrc` |
+| 1.2 The type-check is broken | Resolved in step 2: `npm run typecheck` passes with TypeScript 7 |
+| 1.3 Three test runners | Resolved in step 1: Vitest only |
+| 1.4 Dependencies are far behind | Resolved in steps 1 and 2: five dev dependencies, all on their current major version |
+| 1.5 The npm scripts have gaps | Resolved in steps 1 to 3: `start`, `typecheck`, `test`, `test:watch`, `test:coverage` |
+| 1.6 Strictness is undermined | Partly resolved: the target is `es2022` and `include` is set. `noImplicitAny` stays `false`, because turning it on would flag the `Item` constructor, which the kata forbids changing |
+| 1.7 No linter, formatter or CI | Open |
+| 1.8 Leftovers from the upstream repository | Resolved: `texttest_rig.py` is deleted and the README is rewritten |
+| 1.9 The upstream TextTest setup adds no coverage | Closed: nothing in the repo refers to TextTest any more |
+
+`npm audit` now reports no vulnerability (it reported 14).
+
+### Application code findings
+
+| Finding | Status |
+|---|---|
+| 2.1 Conjured items are missing | Open: step 6 |
+| 2.2 Item types matched by exact, full name | Open: needs a decision (see step 6, open point) |
+| 2.3 `updateQuality` is one nested block | Open: step 5 |
+| 2.4 Bounds applied per step, not enforced | Open: pinned by tests in step 4, not fixed by the plan |
+| 2.5 Magic numbers | Open: step 5 |
+| 2.6 Small code smells | Open: step 5 |
+| 2.7 `Item` constructor parameters are untyped | Open: cannot be fixed without altering `Item` |
+| 2.8 `updateQuality` mutates the items in place | Open: not addressed by the plan |
+
+`app/gilded-rose.ts` has not been modified since the review.
+
+### Test findings
+
+| Finding | Status |
+|---|---|
+| 3.1 The unit tests are placeholders | Partly resolved: the Jest and Mocha ones are deleted. `test/gilded-rose.spec.ts` remains and still fails by design, until step 4 |
+| 3.2 All real coverage comes from one 30-day run | Open: step 4 |
+| 3.3 Cases the snapshot does not cover | Open: step 4 |
+| 3.4 The approval tests are fragile | Resolved in step 1: the test calls the report function in-process |
+| 3.5 The golden-master script has side effects | Mostly resolved: the report is a function that returns text (`buildReport` in `app/report.ts`). A non-numeric argument to `npm start` is still not rejected |
+| 3.6 The three runners repeat the same scenarios | Resolved in step 1 |
+
+Coverage as measured now: 100% statements on `app/gilded-rose.ts` and `app/report.ts`, 0% on `app/program.ts`, which no test runs.
+
 ## Summary
 
 The project is the Gilded Rose refactoring kata in TypeScript: 69 lines of application code and about 150 lines of tests.

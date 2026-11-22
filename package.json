@@ -1,7 +1,7 @@
 {
   "name": "deal-metrics-round",
   "version": "1.0.0",
-  "description": "Gilded Rose kata in TypeScript",
+  "description": "The Gilded Rose refactoring kata in TypeScript",
   "scripts": {
     "start": "tsx app/program.ts",
     "typecheck": "tsc",

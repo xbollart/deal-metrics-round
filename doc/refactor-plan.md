@@ -210,7 +210,7 @@ test/
 - `npm run typecheck` exits without error.
 - `npm start` and `npm start -- 30` print output identical to the baselines recorded before step 1.
 - `npm test` is unchanged: 2 approval tests pass, the `'fixme'` placeholder is the only failure.
-- The snapshot file was moved, not regenerated: it is byte-identical. `app/gilded-rose.ts` is unchanged.
+- The snapshot file was moved, not regenerated: its recorded data is identical. Only its first line changed, because Vitest 5 rewrote the header comment (`// Vitest Snapshot v1` gained a documentation link) during a local run. `app/gilded-rose.ts` is unchanged.
 - Coverage on `app/`: `gilded-rose.ts` and `report.ts` at 100% statements, `program.ts` at 0%, 91.66% overall.
 
 Still open after this step:
