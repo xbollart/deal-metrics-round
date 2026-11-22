@@ -12,14 +12,10 @@ export default defineConfig({
       exclude: ['app/program.ts'],
       reporter: ['text', 'html'],
       reportOnFailure: true,
-      // A coverage run fails if the business rules are not fully covered.
+      // A coverage run fails if these files are not fully covered.
       thresholds: {
-        'app/gilded-rose.ts': {
-          statements: 100,
-          branches: 100,
-          functions: 100,
-          lines: 100,
-        },
+        'app/gilded-rose.ts': { statements: 100, branches: 100, functions: 100, lines: 100 },
+        'app/report.ts': { statements: 100, branches: 100, functions: 100, lines: 100 },
       },
     },
   },
