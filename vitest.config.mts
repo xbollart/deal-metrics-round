@@ -6,7 +6,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    include: ['test/vitest/**/*.{spec,test}.{js,ts}'],
+    include: ['test/vitest/**/*.{spec,test}.ts'],
     coverage: {
       provider: 'istanbul',
       include: ['app/**/*.ts'],

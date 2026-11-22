@@ -8,9 +8,10 @@ Each step is meant to be done and committed on its own. A step is finished only 
 | Step | Title | Status |
 |---|---|---|
 | 1 | Consolidate the tests on Vitest | Done (2026-11-21) |
-| 2 | Verify and close the test coverage | Not started |
-| 3 | Refactor `updateQuality` | Not started |
-| 4 | Implement Conjured items | Not started |
+| 2 | Fix the compilation | Done (2026-11-22) |
+| 3 | Verify and close the test coverage | Not started |
+| 4 | Refactor `updateQuality` | Not started |
+| 5 | Implement Conjured items | Not started |
 
 ## Step 1 — Consolidate the tests on Vitest
 
@@ -60,7 +61,7 @@ Have one test runner, Vitest, with the same coverage as today and no dependency 
 
 ### Known failing test
 
-`test/vitest/gilded-rose.spec.ts` is a placeholder that fails by design (it expects the name `'fixme'`). It is kept as it is in this step, so `npm test` will report exactly one failure, this one, when the step is done. It is replaced in step 2.
+`test/vitest/gilded-rose.spec.ts` is a placeholder that fails by design (it expects the name `'fixme'`). It is kept as it is in this step, so `npm test` will report exactly one failure, this one, when the step is done. It is replaced in step 3.
 
 ### Outcome (2026-11-21)
 
@@ -89,15 +90,88 @@ Still open after this step:
 - **`tsc` still fails.** The Jest/Mocha collision is gone, but TypeScript 4.9 cannot parse the typings of Vitest 5 and `@types/node` 26. It needs the TypeScript upgrade, which is out of scope here.
 - **`texttest_rig.py` still calls `ts-node`.** It was already broken (wrong path) and is listed for removal in the code review.
 
-## Step 2 — Verify and close the test coverage
+## Step 2 — Fix the compilation
+
+### Goal
+
+Have `npm run compile` type-check the application code, the tests and the config with a current TypeScript version, and pass.
+
+### Why now
+
+- Vitest and `tsx` run the code without type-checking it, so type errors currently go unnoticed.
+- The next steps write new tests and restructure `updateQuality`. Both are safer with a working compiler.
+- Step 1 removed the Jest/Mocha type collision; what remains is an outdated compiler, which is a contained change.
+
+### Current state
+
+- `tsc` fails with errors located only in `node_modules`: TypeScript 4.9.5 cannot parse the type definitions of Vitest 5 and `@types/node` 26.
+- `tsc` writes JavaScript files next to the sources even when it reports errors. A run of `npm run compile` leaves `vitest.config.mjs`, `vitest.config.mjs.map` and `.js` files under `app/` and `test/`.
+- Those generated files break the test run: Vitest also collects `test/vitest/*.spec.js`, which fail to load, so `npm test` reports 3 failed files instead of 1 until they are deleted.
+- `tsconfig.json` has no `include`, targets `es5`, and sets `noImplicitAny: false`.
+- The `precompile` script calls `rimraf` with unquoted globs, which likely removes nothing.
+
+### Tasks
+
+1. **Upgrade TypeScript** from 4.9.5 to the current major version (7.0.2 at the time of writing).
+2. **Update `tsconfig.json`.**
+   - Replace the options the new version no longer accepts. Expected candidates: `target: es5`, `baseUrl`, and the module settings.
+   - Add `noEmit: true`. Nothing consumes compiled JavaScript: Vitest and `tsx` run the TypeScript files directly, so `compile` becomes a pure type-check.
+   - Add `include` for `app`, `test` and `vitest.config.mts`.
+3. **Restrict the Vitest `include` pattern to `.ts` files** in `vitest.config.mts`, so a stray `.js` file can never be collected as a test.
+4. **Fix the type errors reported in project files**, if any appear once the compiler can read the dependencies. Errors in `app/gilded-rose.ts` are fixed only if that does not change behaviour or touch the `Item` class.
+5. **Simplify the scripts.** Remove `precompile`, and remove the `rimraf` package, which nothing else uses.
+6. **Delete the generated files** left by earlier compile runs (`vitest.config.mjs`, `vitest.config.mjs.map`, and any `.js` or `.js.map` under `app/` and `test/`).
+
+### Done when
+
+- `npm run compile` exits without error and writes no file.
+- `npm test` gives the same result as after step 1: the `'fixme'` placeholder is the only failure, and the snapshot file is unchanged.
+- `npm run golden-master -- 30` prints the same output as before.
+- The runtime behaviour of `app/gilded-rose.ts` is unchanged.
+- `npm audit` reports no vulnerability (the 3 remaining ones come through `rimraf`).
+
+### Out of scope
+
+- Turning `noImplicitAny` on. It would flag the untyped `Item` constructor, and the kata forbids altering that class.
+- Adding a linter, a formatter or CI.
+- Committing `package-lock.json` and pinning the Node version.
+- Removing `texttest_rig.py`.
+
+### Outcome (2026-11-22)
+
+All "Done when" checks pass:
+
+- `npm run compile` runs TypeScript 7.0.2, exits without error and writes no file. A deliberately wrong test file was rejected, which confirms the tests are type-checked.
+- `npm test` gives the same result as after step 1: 2 approval tests pass, the `'fixme'` placeholder is the only failure.
+- The snapshot file and `app/gilded-rose.ts` are byte-identical to before the step.
+- `npm run golden-master -- 30` prints the same output as before.
+- Coverage is unchanged: 100% statements, 97.14% branches, line 16 uncovered.
+- `npm audit` reports 0 vulnerabilities.
+
+What was changed:
+
+- **`typescript` 4.9.5 → 7.0.2.**
+- **`tsconfig.json`:**
+  - `target` goes from `es5` to `es2022`, and `baseUrl` is removed; TypeScript 7 rejects both old settings.
+  - `module: preserve` and `moduleResolution: bundler` replace `module: commonjs`, to match how Vitest and `tsx` load the files.
+  - `noEmit` and `include` are added, and `sourceMap` is removed since nothing is emitted.
+  - The `@/*` path is written `./app/*`, as required once `baseUrl` is gone.
+- **`vitest.config.mts`:** only `.ts` test files are collected.
+- **`package.json`:** the `precompile` script and the `rimraf` package are removed. Five dev dependencies remain.
+- **Generated files deleted:** `vitest.config.mjs`, its map, and the `.js` and `.js.map` files under `app/` and `test/`.
+
+No type error was found in the project files, so task 4 needed no change.
+
+## Step 3 — Verify and close the test coverage
 
 ### Goal
 
 Have a coverage report that can be trusted, and tests for every behaviour of `updateQuality` that the current snapshot does not pin, before the application code is refactored.
 
-### Why second
+### Why after the compilation fix
 
 - It depends on step 1: the coverage report is only accurate once the "thirtyDays" test runs in-process.
+- With step 2 done, the new tests written here are type-checked.
 - The refactor of `updateQuality` relies on the tests to catch regressions, so the gaps have to be closed first.
 
 ### Findings from the coverage analysis (2026-11-21)
@@ -150,16 +224,16 @@ Inputs that never appear in any test, and that no coverage tool reports because 
 - Conjured items. The snapshot keeps pinning their current output until the feature is implemented.
 - Adding a mutation-testing tool to the project. The check is run as a one-off script.
 
-## Step 3 — Refactor `updateQuality`
+## Step 4 — Refactor `updateQuality`
 
 ### Goal
 
-Make the rules of each item category readable in one place, without changing any behaviour, so that Conjured becomes a small addition in step 4.
+Make the rules of each item category readable in one place, without changing any behaviour, so that Conjured becomes a small addition in step 5.
 
 ### Why before Conjured
 
 - In the current code the degradation logic sits in two separate blocks (before and after the sell date). Adding Conjured there means writing the rule twice, in code that this step rewrites anyway.
-- With the behaviour frozen, the snapshot and the tests from step 2 must pass untouched. That is the clearest possible check for a structural change.
+- With the behaviour frozen, the snapshot and the tests from step 3 must pass untouched. That is the clearest possible check for a structural change.
 
 ### Target structure
 
@@ -167,7 +241,7 @@ Make the rules of each item category readable in one place, without changing any
 - A single place that decides the category of an item from its name.
 - Named constants for the three item names, the maximum quality (50) and the backstage thresholds (10 and 5 days).
 - `updateQuality` reduced to a loop that, for each item, picks the category and applies its function.
-- The normal-item rule written with a degradation rate, so that step 4 can express Conjured as "twice the normal rate".
+- The normal-item rule written with a degradation rate, so that step 5 can express Conjured as "twice the normal rate".
 
 ### Tasks
 
@@ -183,12 +257,12 @@ Each task is a separate commit, and the full test suite passes after each one.
 
 - The `Item` class and the `items` property are not altered (requirement of the kata).
 - No test and no snapshot is modified in this step. If one has to change, the refactor has changed behaviour and must be corrected.
-- The behaviour pinned in step 2 for out-of-range inputs is preserved. In particular, a helper that clamps quality to 0–50 would change it (quality 60 on a normal item gives 59 today, not 50).
+- The behaviour pinned in step 3 for out-of-range inputs is preserved. In particular, a helper that clamps quality to 0–50 would change it (quality 60 on a normal item gives 59 today, not 50).
 - Item categories keep being matched on the exact, full name.
 
 ### Done when
 
-- `npm test` passes with no test or snapshot change since step 2.
+- `npm test` passes with no test or snapshot change since step 3.
 - Coverage is still 100% statements and branches on `app/`.
 - The mutation check detects every change.
 - `updateQuality` has no nested condition deeper than two levels, and no item name or threshold appears as an inline literal.
@@ -198,7 +272,7 @@ Each task is a separate commit, and the full test suite passes after each one.
 - Conjured items.
 - Fixing out-of-range inputs or matching categories by partial name. These are behaviour changes and need their own decision.
 
-## Step 4 — Implement Conjured items
+## Step 5 — Implement Conjured items
 
 ### Goal
 
