@@ -10,7 +10,7 @@ Each step is meant to be done and committed on its own. A step is finished only 
 | 1 | Consolidate the tests on Vitest | Done (2026-11-21) |
 | 2 | Fix the compilation | Done (2026-11-22) |
 | 3 | Restructure the program and the test layout | Done (2026-11-22) |
-| 4 | Verify and close the test coverage | Not started |
+| 4 | Verify and close the test coverage | Done (2026-11-22) |
 | 5 | Refactor `updateQuality` | Not started |
 | 6 | Implement Conjured items | Not started |
 
@@ -297,6 +297,36 @@ Consequence for this step: the 30-day run no longer counts towards coverage. Mea
 - Any change to `app/gilded-rose.ts`, including fixing the out-of-range behaviour.
 - Conjured items. The snapshot keeps pinning their current output until the feature is implemented.
 - Adding a mutation-testing tool to the project. The check is run as a one-off script.
+
+### Outcome (2026-11-22)
+
+All "Done when" checks pass:
+
+- `npm test` passes with no failure: 3 files, 61 tests (54 unit tests of `updateQuality`, 5 of `buildReport`, 2 end-to-end).
+- The coverage report shows 100% statements and branches for `app/gilded-rose.ts`, up from 87.09% and 82.85%.
+- The mutation check detects all 55 changes with the unit tests alone, without the help of the 30-day snapshot.
+- `app/gilded-rose.ts` and the snapshot file are byte-identical to before the step.
+
+What was done:
+
+- **`test/unit/gilded-rose.spec.ts` holds 54 named tests**, one item and one call to `updateQuality` each, grouped by category:
+  - normal item (9 tests), Aged Brie (8), Backstage passes (16) and Sulfuras (3), including the boundaries at 11, 10, 6, 5 and 0 days and at quality 0, 1, 48, 49 and 50
+  - shop (4): no item given, several items updated together, items updated in place, name unchanged
+  - current behaviour outside the specified range (14): quality above 50 or below 0, a Sulfuras item with a quality other than 80, and names close to the special ones
+- **All 54 tests passed on their first run against the unchanged code.** No expected value had to be adjusted, so the code does what the requirements say for the cases they describe.
+- **Coverage thresholds are set** in `vitest.config.mts`: `npm run test:coverage` fails if `app/gilded-rose.ts` drops below 100% statements, branches, functions or lines. This was checked by running coverage with most tests left out, which failed as expected. The thresholds apply to coverage runs, not to a plain `npm test`.
+- **The mutation check now runs the real test files.** A one-off script copies the project to a scratch folder, applies each of the 55 changes to `updateQuality` in turn, and runs `test/unit`. It is not part of the repository.
+
+Behaviour pinned by the "outside the specified range" tests, for reference in step 5:
+
+| Input | Result today |
+|---|---|
+| Normal item at quality 60 | Loses 1 (or 2 after the sell date); never brought back to 50 |
+| Normal item at quality −3 | Stays at −3 |
+| Aged Brie or backstage pass at quality 60 | Stays at 60 (a pass still drops to 0 after the concert) |
+| Aged Brie at quality −3 | Gains 1 |
+| Sulfuras at any quality | Unchanged |
+| "Backstage passes to a Other concert", "aged brie", "Sulfuras" | Treated as normal items |
 
 ## Step 5 — Refactor `updateQuality`
 

@@ -9,7 +9,7 @@ This is an analysis only. No fix described here has been applied.
 
 ## Status on 2026-11-22
 
-The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 3 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
+The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 4 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
 
 Files and commands named in the findings have changed:
 
@@ -45,7 +45,7 @@ Files and commands named in the findings have changed:
 | 2.1 Conjured items are missing | Open: step 6 |
 | 2.2 Item types matched by exact, full name | Open: needs a decision (see step 6, open point) |
 | 2.3 `updateQuality` is one nested block | Open: step 5 |
-| 2.4 Bounds applied per step, not enforced | Open: pinned by tests in step 4, not fixed by the plan |
+| 2.4 Bounds applied per step, not enforced | Open: the behaviour is pinned by tests since step 4, not fixed by the plan |
 | 2.5 Magic numbers | Open: step 5 |
 | 2.6 Small code smells | Open: step 5 |
 | 2.7 `Item` constructor parameters are untyped | Open: cannot be fixed without altering `Item` |
@@ -57,14 +57,14 @@ Files and commands named in the findings have changed:
 
 | Finding | Status |
 |---|---|
-| 3.1 The unit tests are placeholders | Resolved: the Jest and Mocha ones are deleted, and the one in `test/unit/gilded-rose.spec.ts` is replaced by a real unit test. Named tests per rule still come in step 4 |
-| 3.2 All real coverage comes from one 30-day run | Open: step 4 |
-| 3.3 Cases the snapshot does not cover | Open: step 4 |
+| 3.1 The unit tests are placeholders | Resolved in step 4: `test/unit/gilded-rose.spec.ts` holds 54 named tests |
+| 3.2 All real coverage comes from one 30-day run | Resolved in step 4: the unit tests alone cover `app/gilded-rose.ts` at 100% and detect all 55 mutations |
+| 3.3 Cases the snapshot does not cover | Resolved in step 4 for out-of-range inputs and name variants, which are pinned by tests. Correct Conjured behaviour comes in step 6 |
 | 3.4 The approval tests are fragile | Resolved: the end-to-end test launches the program as a separate process and reads its output, with no patching of `console.log` or `process.argv` |
 | 3.5 The golden-master script has side effects | Mostly resolved: the report is a function that returns text (`buildReport` in `app/report.ts`). A non-numeric argument to `npm start` is still not rejected |
 | 3.6 The three runners repeat the same scenarios | Resolved in step 1 |
 
-Coverage as measured now, on the unit tests alone: 87.09% statements on `app/gilded-rose.ts` and 100% on `app/report.ts`. The end-to-end test runs the program in a separate process, so it does not count towards coverage, and `app/program.ts` is excluded for that reason.
+Coverage as measured now, on the unit tests alone: 100% statements and branches on `app/gilded-rose.ts` and `app/report.ts`. The end-to-end test runs the program in a separate process, so it does not count towards coverage, and `app/program.ts` is excluded for that reason.
 
 ## Summary
 
