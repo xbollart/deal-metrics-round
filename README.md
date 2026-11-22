@@ -4,7 +4,7 @@ This project is the Gilded Rose refactoring kata in TypeScript. The rules of the
 
 ## Requirements
 
-Node.js 22.12 or later (24 and 26 are supported). The version used for development is in `.nvmrc`:
+Node.js 26 or later. The version used for development is in `.nvmrc`:
 
 ```sh
 nvm use

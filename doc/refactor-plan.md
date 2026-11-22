@@ -13,7 +13,7 @@ Each step is meant to be done and committed on its own. A step is finished only 
 | 4 | Verify and close the test coverage | Done (2026-11-22) |
 | 5 | Refactor `updateQuality` | Done (2026-11-22) |
 | 6 | Implement Conjured items | Not started |
-| 7 | Test the remaining edge cases | Not started |
+| 7 | Test the remaining edge cases and finish the tooling | Not started |
 
 ## Step 1 — Consolidate the tests on Vitest
 
@@ -481,18 +481,22 @@ Implement the one feature the requirements ask for: "Conjured" items degrade in 
 
 How a Conjured item is recognised. The requirements name a category ("Conjured" items), while the existing categories are matched on the exact name. The proposal is to match any name starting with `Conjured`, which covers "Conjured Mana Cake" and any future conjured item. The alternative is the exact name "Conjured Mana Cake" only.
 
-## Step 7 — Test the remaining edge cases
+## Step 7 — Test the remaining edge cases and finish the tooling
 
-### Goal
+The step has two parts: part A covers the edge cases that are still untested, part B closes the gaps left in the tooling.
+
+### Part A — Edge cases
+
+#### Goal
 
 Cover the cases that are still untested after step 4. They are all outside what the requirements describe, so each one needs a decision first: accept the current behaviour and pin it with a test, or define a better behaviour and implement it.
 
-### Why last
+#### Why last
 
 - None of these cases is needed to refactor `updateQuality` safely or to implement Conjured.
 - Several of them are about input validation, which the requirements do not ask for. Deciding them is easier once the code has its final structure.
 
-### Cases
+#### Cases
 
 1. **Unusual value types.** `Item` accepts anything, since its constructor is untyped. Nothing tests:
    - decimals, such as quality 0.5
@@ -512,7 +516,7 @@ Cover the cases that are still untested after step 4. They are all outside what 
    - an empty name
    - a special name with a trailing space
 
-### Tasks
+#### Tasks
 
 1. **Observe the current behaviour** of each case and record it in this document. The negative and decimal numbers of days have not been run yet.
 2. **Decide, case by case,** between pinning the current behaviour and changing it. Changing it means rejecting or correcting the input, for example an error message for a non-numeric number of days.
@@ -522,18 +526,54 @@ Cover the cases that are still untested after step 4. They are all outside what 
 4. **Implement the changes decided in task 2,** if any, each with its test written first.
 5. **Re-run coverage and the mutation check.**
 
-### Constraints
+#### Constraints
 
 - The `Item` class is not altered (requirement of the kata). Validation of item values, if any is decided, lives outside it.
 - A test that pins a behaviour nobody chose says so, in the same way as the "current behaviour outside the specified range" tests of step 4.
 
-### Done when
+#### Done when
 
 - Each of the five cases has at least one test, and this document records the decision taken for it.
 - `npm test` passes, coverage is still 100% on `app/gilded-rose.ts`, and the mutation check detects every change.
 - The 30-day snapshot is unchanged, unless a decision of task 2 changes the report on purpose.
 
-### Out of scope
+#### Out of scope
 
 - The out-of-range combinations of sellIn and quality. They are covered by the grid test added after step 4.
+
+### Part B — Tooling
+
+#### Goal
+
+Close the gaps found by the stack review of 2026-11-22. At that date the stack was current and minimal (Node pinned, TypeScript 7, Vitest 5, five dev dependencies, no outdated or vulnerable package), and what was missing was automation around it.
+
+Three small points from the same review were fixed on the spot (2026-11-22): the unused `lcov` coverage output is dropped, the `.gitignore` rules for generated `.js` files are removed since nothing emits JavaScript any more, and `engines` now requires Node 26, the only version the project has been run on.
+
+#### Gaps, ordered by how much closing them would help
+
+1. **Nothing runs automatically.** There is no CI. The type-check, the tests and the coverage only run when someone types the commands.
+2. **No linter or formatter.** Only `.editorconfig` exists. The style is consistent today because one author wrote the code in two days; it will not stay that way by itself.
+3. **`noImplicitAny` is still `false`.** It stays off because turning it on flags the untyped `Item` constructor, which the kata forbids changing. The cost is that a forgotten type anywhere else also goes unnoticed.
+4. **Coverage thresholds only cover one file.** `app/report.ts` is at 100% but has no threshold, so it could drop silently.
+5. **The mutation check lives outside the repository.** It is a script in a temporary folder, already rewritten once. A proper tool or a committed script would make it repeatable.
+
+#### Tasks
+
+1. **Add a CI workflow** (GitHub Actions) that runs `npm ci`, `npm run typecheck` and `npm run test:coverage` on every push and pull request.
+2. **Add a linter and a formatter**, with one script each, and run the linter in CI.
+3. **Decide on `noImplicitAny`.** The options are to keep it off, or to turn it on and exempt the `Item` constructor alone, without altering the class.
+4. **Extend the coverage thresholds** to `app/report.ts`.
+5. **Make the mutation check repeatable**, either with a mutation-testing tool such as Stryker or by committing the script, and document how to run it in the README.
+
+#### Done when
+
+- A push to GitHub runs the type-check, the tests and the coverage thresholds, and a failure is visible on the commit.
+- `npm run lint` passes, and the README lists the new commands.
+- The `noImplicitAny` decision is recorded in this document.
+- A coverage run fails if `app/report.ts` drops below 100%.
+- The mutation check can be run with one documented command.
+
+#### Out of scope
+
+- Any change of behaviour in `app/`.
 

@@ -10,7 +10,7 @@ export default defineConfig({
       // The entry point only runs in the separate process started by the
       // e2e tests, which the coverage tool cannot see.
       exclude: ['app/program.ts'],
-      reporter: ['text', 'html', 'lcov'],
+      reporter: ['text', 'html'],
       reportOnFailure: true,
       // A coverage run fails if the business rules are not fully covered.
       thresholds: {
