@@ -70,15 +70,17 @@ function updateAgedBrie(item: Item): void {
 
 function updateBackstagePasses(item: Item): void {
   increaseQuality(item);
-  if (item.sellIn <= BACKSTAGE_DOUBLE_INCREASE_DAYS) {
+  if (hasAtMostDaysLeft(item, BACKSTAGE_DOUBLE_INCREASE_DAYS)) {
     increaseQuality(item);
   }
-  if (item.sellIn <= BACKSTAGE_TRIPLE_INCREASE_DAYS) {
+  if (hasAtMostDaysLeft(item, BACKSTAGE_TRIPLE_INCREASE_DAYS)) {
     increaseQuality(item);
   }
   item.sellIn -= 1;
   if (sellDateHasPassed(item)) {
-    item.quality = MIN_QUALITY;
+    // Drops to 0. Kept as a subtraction because the original code did it this
+    // way, which gives NaN when the quality is NaN or infinite (see the tests).
+    item.quality = item.quality - item.quality;
   }
 }
 
@@ -95,6 +97,13 @@ function degrade(item: Item, rate: number): void {
   for (let point = 0; point < loss; point++) {
     decreaseQuality(item);
   }
+}
+
+// To be called before the sellIn of the day is lowered. Written as "fewer than
+// days + 1" because the original code did it this way: a sellIn that is not a
+// whole number, such as 10.5, counts as "10 days or less" (see the tests).
+function hasAtMostDaysLeft(item: Item, days: number): boolean {
+  return item.sellIn < days + 1;
 }
 
 // To be called after the sellIn of the day has been lowered.

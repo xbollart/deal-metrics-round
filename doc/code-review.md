@@ -9,7 +9,7 @@ This is an analysis only. No fix described here has been applied.
 
 ## Status on 2026-11-22
 
-The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 4 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
+The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 5 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
 
 Files and commands named in the findings have changed:
 
@@ -44,14 +44,14 @@ Files and commands named in the findings have changed:
 |---|---|
 | 2.1 Conjured items are missing | Open: step 6 |
 | 2.2 Item types matched by exact, full name | Open: needs a decision (see step 6, open point) |
-| 2.3 `updateQuality` is one nested block | Open: step 5 |
+| 2.3 `updateQuality` is one nested block | Resolved in step 5: one flat function per category |
 | 2.4 Bounds applied per step, not enforced | Open: the behaviour is pinned by tests since step 4, including a grid test over 4,845 combinations, but not fixed by the plan |
-| 2.5 Magic numbers | Open: step 5 |
-| 2.6 Small code smells | Open: step 5 |
+| 2.5 Magic numbers | Resolved in step 5: named constants, with thresholds written as 10 and 5 days |
+| 2.6 Small code smells | Resolved in step 5 |
 | 2.7 `Item` constructor parameters are untyped | Open: cannot be fixed without altering `Item` |
 | 2.8 `updateQuality` mutates the items in place | Open: not addressed by the plan |
 
-`app/gilded-rose.ts` has not been modified since the review.
+`app/gilded-rose.ts` was refactored in step 5 without changing its behaviour for whole-number inputs. The line numbers quoted in the findings refer to the original version.
 
 ### Test findings
 

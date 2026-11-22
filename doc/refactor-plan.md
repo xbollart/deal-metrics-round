@@ -11,7 +11,7 @@ Each step is meant to be done and committed on its own. A step is finished only 
 | 2 | Fix the compilation | Done (2026-11-22) |
 | 3 | Restructure the program and the test layout | Done (2026-11-22) |
 | 4 | Verify and close the test coverage | Done (2026-11-22) |
-| 5 | Refactor `updateQuality` | Not started |
+| 5 | Refactor `updateQuality` | Done (2026-11-22) |
 | 6 | Implement Conjured items | Not started |
 | 7 | Test the remaining edge cases | Not started |
 
@@ -391,6 +391,50 @@ Each task is a separate commit, and the full test suite passes after each one.
 - Conjured items.
 - Fixing out-of-range inputs or matching categories by partial name. These are behaviour changes and need their own decision.
 
+### Outcome (2026-11-22)
+
+All "Done when" checks pass:
+
+- `npm test` passes, 68 tests. No existing test and no snapshot was modified; 6 tests were added (see the correction below).
+- Coverage is still 100% statements and branches on `app/gilded-rose.ts`.
+- `updateQuality` is a three-line loop. No function has a condition nested inside another, and no item name or threshold appears as an inline literal.
+- The `Item` class and the `items` property are untouched.
+
+The four tasks are four commits, each verified with the type-check, the full test suite, the coverage thresholds and the checksums of the test files:
+
+| Commit | Task |
+|---|---|
+| `c4b66fe` | Loop over a local `item`, strict equality, `quality = 0` |
+| `c94164a` | Named constants for the item names, the quality bounds and the backstage thresholds |
+| `c487048` | One function per category, with a single `switch` on the item name |
+| `81bb147` | Flat category functions built on `increaseQuality`, `decreaseQuality` and `degrade(item, rate)` |
+
+Resulting structure of `app/gilded-rose.ts`:
+
+- `updateItem` picks the category from the exact item name.
+- `updateNormalItem`, `updateAgedBrie`, `updateBackstagePasses` and `updateSulfuras` each hold the rules of one category.
+- `degrade(item, rate)` lowers quality by `rate` per day and by twice that after the sell date. A normal item uses the rate 1; step 6 can give Conjured the rate 2.
+- `increaseQuality` and `decreaseQuality` change quality by one point and check the bound first. `degrade` removes one point at a time through `decreaseQuality`, which is what keeps the out-of-range behaviour of step 4 (quality 60 gives 59, quality −3 stays −3).
+
+Two checks beyond the test suite:
+
+- **Direct comparison of the original and the refactored code**, with a one-off script: 197,109 one-day cases (9 names, sellIn −60 to 60, quality −60 to 120) and 17,920 shop-days of multi-day sequences. No difference.
+- **A new mutation check written for the new code**: 76 changes (comparisons, constants, names, deleted statements, forced conditions). The rule tests detect 74. The other 2 cannot be detected because they change nothing: deleting the call to `updateSulfuras`, which is an empty function, and deleting the `break` after the backstage case, which then falls through to that same empty function.
+
+Correction made after the four commits: two changes of behaviour were removed.
+
+The comparison script also tried decimals, `NaN`, infinities, `null`, `undefined` and strings. At first 36 of these 1,050 cases differed, all for backstage passes, because tasks 1 and 2 had replaced two expressions of the original code. A refactor must not change behaviour, even for values nobody intended, so both expressions were put back and are now pinned by tests:
+
+| Original expression, restored | Input it matters for | Result | Test |
+|---|---|---|---|
+| `sellIn < 11` and `sellIn < 6`, written as `hasAtMostDaysLeft(item, 10)` and `(item, 5)` | A pass with a decimal sellIn between 10 and 11, or between 5 and 6 | Counts as "10 days or less" (or 5) | Two cases in "current behaviour outside the specified range" |
+| `quality - quality`, not `quality = 0` | A pass after the concert whose quality is `NaN` or infinite | `NaN` instead of 0 | The "known bug" block |
+
+- **The `NaN` result is a bug** of the original code: after the concert the quality should be 0. The tests in the "known bug" block expose it by asserting what the code does today, and a comment says the expected value becomes 0 once the bug is fixed. It is not fixed in this step.
+- **6 tests were added** to `test/unit/gilded-rose.spec.ts` for this, which is the only change to a test file in this step. No existing test and no snapshot was modified.
+- **After the correction the comparison shows no difference at all**: 0 of 197,109 one-day cases, 0 of the multi-day sequences, and 0 of the 1,050 unusual values.
+- **The mutation check was run again** on the corrected code: 76 changes, 74 detected, and the same 2 undetectable ones around the empty `updateSulfuras`.
+
 ## Step 6 — Implement Conjured items
 
 ### Goal
@@ -446,6 +490,8 @@ Cover the cases that are still untested after step 4. They are all outside what 
    - decimals, such as quality 0.5
    - `NaN`
    - numbers passed as strings. These would misbehave for Aged Brie, where `+ 1` concatenates instead of adding.
+
+   Already pinned since step 5: a decimal sellIn for a backstage pass, and a `NaN` or infinite quality for a pass after the concert, the latter as a known bug to fix here.
 2. **Program arguments.** The end-to-end tests cover `30` and no argument. Not covered:
    - a non-numeric argument: `npm start -- abc` prints only the greeting line, with no error
    - a negative number of days

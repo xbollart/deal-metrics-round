@@ -141,5 +141,37 @@ describe('Gilded Rose', () => {
     ])('%s', (_description, name, sellIn, quality, expectedSellIn, expectedQuality) => {
       expect(afterOneDay(name, sellIn, quality)).toEqual([expectedSellIn, expectedQuality]);
     });
+
+    // sellIn is meant to be a whole number of days, but Item accepts any value.
+    // The original code compares with "fewer than 11" and "fewer than 6", so
+    // half days count as "10 days or less" and "5 days or less".
+    it.each([
+      ['Backstage passes with 10.5 days left gain 2, as with 10 days', BACKSTAGE, 10.5, 10, 9.5, 12],
+      ['Backstage passes with 5.5 days left gain 3, as with 5 days', BACKSTAGE, 5.5, 10, 4.5, 13],
+    ])('%s', (_description, name, sellIn, quality, expectedSellIn, expectedQuality) => {
+      expect(afterOneDay(name, sellIn, quality)).toEqual([expectedSellIn, expectedQuality]);
+    });
+  });
+
+  // KNOWN BUG, inherited from the original code and not fixed yet.
+  //
+  // After the concert the quality of a backstage pass should be 0, whatever it
+  // was. The original code computes "quality - quality" instead of setting 0,
+  // which gives NaN when the quality is not a finite number.
+  //
+  // These tests expose the bug by asserting what the code does today. When the
+  // bug is fixed, the expected quality in each of them becomes 0.
+  describe('known bug: backstage passes with a non-finite quality after the concert', () => {
+    it.each([
+      ['NaN', NaN],
+      ['Infinity', Infinity],
+      ['-Infinity', -Infinity],
+    ])('a quality of %s ends up as NaN instead of 0', (_label, quality) => {
+      expect(afterOneDay(BACKSTAGE, 0, quality)).toEqual([-1, NaN]);
+    });
+
+    it('a finite quality drops to 0, as specified', () => {
+      expect(afterOneDay(BACKSTAGE, 0, 30)).toEqual([-1, 0]);
+    });
   });
 });
