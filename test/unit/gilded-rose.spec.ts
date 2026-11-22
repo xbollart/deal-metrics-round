@@ -11,6 +11,18 @@ function afterOneDay(name: string, sellIn: number, quality: number): [number, nu
   return [item.sellIn, item.quality];
 }
 
+/** Runs several days on a single item and returns its [sellIn, quality] after each day. */
+function afterEachDay(name: string, sellIn: number, quality: number, days: number): [number, number][] {
+  const item = new Item(name, sellIn, quality);
+  const gildedRose = new GildedRose([item]);
+  const history: [number, number][] = [];
+  for (let day = 0; day < days; day++) {
+    gildedRose.updateQuality();
+    history.push([item.sellIn, item.quality]);
+  }
+  return history;
+}
+
 describe('Gilded Rose', () => {
   describe('normal item', () => {
     it.each([
@@ -153,6 +165,111 @@ describe('Gilded Rose', () => {
       const [item] = new GildedRose([new Item('foo', 5, 10)]).updateQuality();
 
       expect(item.name).toBe('foo');
+    });
+  });
+
+  describe('several days in a row', () => {
+    it('a normal item loses 1 a day, then 2 a day after the sell date, down to 0', () => {
+      expect(afterEachDay('foo', 2, 7, 6)).toEqual([
+        [1, 6],
+        [0, 5],
+        [-1, 3],
+        [-2, 1],
+        [-3, 0],
+        [-4, 0],
+      ]);
+    });
+
+    it('Aged Brie gains 1 a day, then 2 a day after the sell date, up to 50', () => {
+      expect(afterEachDay(AGED_BRIE, 2, 44, 6)).toEqual([
+        [1, 45],
+        [0, 46],
+        [-1, 48],
+        [-2, 50],
+        [-3, 50],
+        [-4, 50],
+      ]);
+    });
+
+    it('Backstage passes gain 1, then 2, then 3 a day, and drop to 0 after the concert', () => {
+      expect(afterEachDay(BACKSTAGE, 12, 10, 14)).toEqual([
+        [11, 11],
+        [10, 12],
+        [9, 14],
+        [8, 16],
+        [7, 18],
+        [6, 20],
+        [5, 22],
+        [4, 25],
+        [3, 28],
+        [2, 31],
+        [1, 34],
+        [0, 37],
+        [-1, 0],
+        [-2, 0],
+      ]);
+    });
+
+    it('Sulfuras stays the same day after day', () => {
+      expect(afterEachDay(SULFURAS, 0, 80, 3)).toEqual([
+        [0, 80],
+        [0, 80],
+        [0, 80],
+      ]);
+    });
+
+    it('a Conjured item loses 2 a day, then 4 a day after the sell date, down to 0', () => {
+      expect(afterEachDay(CONJURED, 2, 11, 5)).toEqual([
+        [1, 9],
+        [0, 7],
+        [-1, 3],
+        [-2, 0],
+        [-3, 0],
+      ]);
+    });
+  });
+
+  describe('shop edge cases', () => {
+    it('updates an item twice a day when it is listed twice', () => {
+      const item = new Item('foo', 5, 10);
+
+      new GildedRose([item, item]).updateQuality();
+
+      expect([item.sellIn, item.quality]).toEqual([3, 8]);
+    });
+
+    it('updates the items added to the list after the shop was created', () => {
+      const items = [new Item('foo', 5, 10)];
+      const gildedRose = new GildedRose(items);
+      items.push(new Item('added to the original list', 5, 10));
+      gildedRose.items.push(new Item('added through the shop', 5, 10));
+
+      expect(gildedRose.updateQuality().map((item) => [item.sellIn, item.quality])).toEqual([
+        [4, 9],
+        [4, 9],
+        [4, 9],
+      ]);
+    });
+
+    it('updates the new list when the list of the shop is replaced', () => {
+      const gildedRose = new GildedRose([new Item('foo', 5, 10)]);
+      gildedRose.items = [new Item('replacement', 3, 6)];
+
+      expect(gildedRose.updateQuality()).toEqual([{ name: 'replacement', sellIn: 2, quality: 5 }]);
+    });
+  });
+
+  describe('name edge cases', () => {
+    it.each([
+      ['an empty name', ''],
+      ['a name made of a space', ' '],
+      ['"Aged Brie" followed by a space', 'Aged Brie '],
+      ['"Aged Brie" preceded by a space', ' Aged Brie'],
+      ['the backstage pass name followed by a space', `${BACKSTAGE} `],
+      ['the Sulfuras name followed by a space', `${SULFURAS} `],
+      ['"Conjured Mana Cake" preceded by a space', ` ${CONJURED}`],
+    ])('%s is a normal item', (_description, name) => {
+      expect(afterOneDay(name, 5, 10)).toEqual([4, 9]);
     });
   });
 
