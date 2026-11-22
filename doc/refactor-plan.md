@@ -12,7 +12,7 @@ Each step is meant to be done and committed on its own. A step is finished only 
 | 3 | Restructure the program and the test layout | Done (2026-11-22) |
 | 4 | Verify and close the test coverage | Done (2026-11-22) |
 | 5 | Refactor `updateQuality` | Done (2026-11-22) |
-| 6 | Implement Conjured items | Not started |
+| 6 | Implement Conjured items | Done (2026-11-22) |
 | 7 | Test the remaining edge cases and finish the tooling | Not started |
 
 ## Step 1 — Consolidate the tests on Vitest
@@ -477,9 +477,40 @@ Implement the one feature the requirements ask for: "Conjured" items degrade in 
 - The diffs of the "thirtyDays" snapshot and of the grid snapshot contain only "Conjured Mana Cake" lines.
 - Coverage is still 100% on `app/`, and the mutation check detects every change.
 
-### Open point
+### Decision on the open point (2026-11-22)
 
-How a Conjured item is recognised. The requirements name a category ("Conjured" items), while the existing categories are matched on the exact name. The proposal is to match any name starting with `Conjured`, which covers "Conjured Mana Cake" and any future conjured item. The alternative is the exact name "Conjured Mana Cake" only.
+A Conjured item is any item whose name starts with `Conjured`. The requirements name a category, and this covers "Conjured Mana Cake" as well as any future conjured item. The alternative, the exact name "Conjured Mana Cake" only, was not retained.
+
+Consequences, each pinned by a test:
+
+- The match is case-sensitive: "conjured mana cake" is a normal item.
+- The prefix must be at the start: "Mana Cake, Conjured" is a normal item.
+- "Conjured" alone is a Conjured item.
+- "Conjured Aged Brie" is a Conjured item, not an Aged Brie: the special names are still matched exactly, and this name is not one of them.
+
+### Outcome (2026-11-22)
+
+All "Done when" checks pass:
+
+- The new Conjured tests pass, and every other test passes unchanged: 87 tests in total.
+- The diff of the "thirtyDays" snapshot has 8 changed lines, all "Conjured Mana Cake": the item goes (3, 6) → (2, 4) → (1, 2) → (0, 0) and stays at 0, where it went (2, 5) → (1, 4) → (0, 3) → (−1, 1) → 0 before.
+- The diff of the grid snapshot touches lines 86 to 102 only, the 17 rows of the "Conjured Mana Cake" block.
+- Coverage is 100% statements and branches on `app/gilded-rose.ts`.
+- The mutation check tried 88 changes and the rule tests detect 86. The other 2 are the undetectable ones around the empty `updateSulfuras`, as in step 5.
+
+How it was done:
+
+1. **Tests first.** 19 tests were added to `test/unit/gilded-rose.spec.ts`: 11 for the rule, 6 for how the name is recognised, and 2 pinning out-of-range quality. Run before any change to the code, 12 of them failed, along with the "every item" shop test extended with a Conjured item.
+2. **The implementation is four additions** in `app/gilded-rose.ts`: the prefix constant, `CONJURED_DEGRADATION_RATE` defined as twice the normal rate, `isConjured`, and `updateConjuredItem`, which calls `degrade` with that rate. No existing rule was edited.
+3. **The two snapshots were updated on purpose,** by running only their two test files with the update flag, and both diffs were reviewed line by line.
+4. **The comment** "this conjured item does not work properly yet" is removed from `app/report.ts`.
+
+Two points worth knowing:
+
+- **A name that is not text stays a normal item.** `isConjured` checks the type before looking at the prefix. Without that check, an item created with a number as name would make `updateQuality` fail, where the code before this step treated it as a normal item. A test pins this.
+- **Out-of-range quality follows the normal-item behaviour,** since both use `degrade`: a Conjured item at quality 60 goes to 58, and one at −3 stays at −3.
+
+A direct comparison of the code before and after this step, over 21,901 combinations of sellIn and quality per name, shows no difference for any name other than a Conjured one.
 
 ## Step 7 — Test the remaining edge cases and finish the tooling
 

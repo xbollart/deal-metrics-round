@@ -13,6 +13,8 @@ export class Item {
 const AGED_BRIE = 'Aged Brie';
 const BACKSTAGE_PASSES = 'Backstage passes to a TAFKAL80ETC concert';
 const SULFURAS = 'Sulfuras, Hand of Ragnaros';
+// Any item whose name starts with this prefix is a Conjured item.
+const CONJURED_PREFIX = 'Conjured';
 
 const MIN_QUALITY = 0;
 const MAX_QUALITY = 50;
@@ -23,6 +25,8 @@ const BACKSTAGE_TRIPLE_INCREASE_DAYS = 5;
 
 // Quality a normal item loses per day before its sell date.
 const NORMAL_DEGRADATION_RATE = 1;
+// Conjured items degrade twice as fast as normal items.
+const CONJURED_DEGRADATION_RATE = NORMAL_DEGRADATION_RATE * 2;
 
 export class GildedRose {
   items: Array<Item>;
@@ -52,12 +56,26 @@ function updateItem(item: Item): void {
       updateSulfuras(item);
       break;
     default:
-      updateNormalItem(item);
+      if (isConjured(item)) {
+        updateConjuredItem(item);
+      } else {
+        updateNormalItem(item);
+      }
   }
+}
+
+// The type check keeps an item whose name is not text a normal item, as it
+// was before Conjured items existed, instead of failing on it.
+function isConjured(item: Item): boolean {
+  return typeof item.name === 'string' && item.name.startsWith(CONJURED_PREFIX);
 }
 
 function updateNormalItem(item: Item): void {
   degrade(item, NORMAL_DEGRADATION_RATE);
+}
+
+function updateConjuredItem(item: Item): void {
+  degrade(item, CONJURED_DEGRADATION_RATE);
 }
 
 function updateAgedBrie(item: Item): void {

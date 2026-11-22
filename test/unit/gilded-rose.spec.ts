@@ -3,6 +3,7 @@ import { Item, GildedRose } from '../../app/gilded-rose';
 const AGED_BRIE = 'Aged Brie';
 const BACKSTAGE = 'Backstage passes to a TAFKAL80ETC concert';
 const SULFURAS = 'Sulfuras, Hand of Ragnaros';
+const CONJURED = 'Conjured Mana Cake';
 
 /** Runs one day on a single item and returns its [sellIn, quality]. */
 function afterOneDay(name: string, sellIn: number, quality: number): [number, number] {
@@ -76,6 +77,40 @@ describe('Gilded Rose', () => {
     });
   });
 
+  describe('Conjured item', () => {
+    it.each([
+      ['loses 2 quality before the sell date, twice a normal item', 3, 6, 2, 4],
+      ['loses 2 quality on the last day before the sell date', 1, 6, 0, 4],
+      ['loses 4 quality once the sell date has passed, twice a normal item', 0, 6, -1, 2],
+      ['keeps losing 4 quality long after the sell date', -5, 10, -6, 6],
+      ['drops from quality 2 to 0 before the sell date', 3, 2, 2, 0],
+      ['drops from quality 1 to 0 before the sell date, not below', 3, 1, 2, 0],
+      ['stays at quality 0 before the sell date', 3, 0, 2, 0],
+      ['drops from quality 4 to 0 after the sell date', 0, 4, -1, 0],
+      ['drops from quality 3 to 0 after the sell date, not below', 0, 3, -1, 0],
+      ['drops from quality 1 to 0 after the sell date, not below', 0, 1, -1, 0],
+      ['stays at quality 0 after the sell date', 0, 0, -1, 0],
+    ])('%s', (_description, sellIn, quality, expectedSellIn, expectedQuality) => {
+      expect(afterOneDay(CONJURED, sellIn, quality)).toEqual([expectedSellIn, expectedQuality]);
+    });
+
+    it.each([
+      ['any name starting with "Conjured" is a Conjured item', 'Conjured Health Potion', 3, 6, 2, 4],
+      ['the name "Conjured" alone is a Conjured item', 'Conjured', 3, 6, 2, 4],
+      ['a conjured version of a special item degrades like any Conjured item', 'Conjured Aged Brie', 3, 6, 2, 4],
+      ['"conjured" in lower case is a normal item', 'conjured mana cake', 3, 6, 2, 5],
+      ['a name that only contains "Conjured" is a normal item', 'Mana Cake, Conjured', 3, 6, 2, 5],
+    ])('%s', (_description, name, sellIn, quality, expectedSellIn, expectedQuality) => {
+      expect(afterOneDay(name, sellIn, quality)).toEqual([expectedSellIn, expectedQuality]);
+    });
+
+    it('an item whose name is not text stays a normal item', () => {
+      const [item] = new GildedRose([new Item(42, 3, 6)]).updateQuality();
+
+      expect([item.sellIn, item.quality]).toEqual([2, 5]);
+    });
+  });
+
   describe('shop', () => {
     it('starts with no item when none is given', () => {
       const gildedRose = new GildedRose();
@@ -90,6 +125,7 @@ describe('Gilded Rose', () => {
         new Item(AGED_BRIE, 5, 10),
         new Item(BACKSTAGE, 5, 10),
         new Item(SULFURAS, 5, 80),
+        new Item(CONJURED, 5, 10),
       ]);
 
       expect(gildedRose.updateQuality()).toEqual([
@@ -97,6 +133,7 @@ describe('Gilded Rose', () => {
         { name: AGED_BRIE, sellIn: 4, quality: 11 },
         { name: BACKSTAGE, sellIn: 4, quality: 13 },
         { name: SULFURAS, sellIn: 5, quality: 80 },
+        { name: CONJURED, sellIn: 4, quality: 8 },
       ]);
     });
 
@@ -128,6 +165,8 @@ describe('Gilded Rose', () => {
       ['a normal item above quality 50 loses 2 after the sell date', 'foo', 0, 60, -1, 58],
       ['a normal item with negative quality keeps it', 'foo', 5, -3, 4, -3],
       ['a normal item with negative quality keeps it after the sell date', 'foo', 0, -3, -1, -3],
+      ['a Conjured item above quality 50 loses 2 and is not brought back to 50', CONJURED, 5, 60, 4, 58],
+      ['a Conjured item with negative quality keeps it', CONJURED, 5, -3, 4, -3],
       ['Aged Brie above quality 50 keeps its quality', AGED_BRIE, 5, 60, 4, 60],
       ['Aged Brie above quality 50 keeps its quality after the sell date', AGED_BRIE, 0, 60, -1, 60],
       ['Aged Brie with negative quality gains 1', AGED_BRIE, 5, -3, 4, -2],

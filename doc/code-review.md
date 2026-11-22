@@ -9,7 +9,7 @@ This is an analysis only. No fix described here has been applied.
 
 ## Status on 2026-11-22
 
-The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 5 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
+The review below describes the repository as it was at commit `a8ef519`. Since then, steps 1 to 6 of the [refactor plan](refactor-plan.md) and some housekeeping have been done. This section says where each finding stands; the findings themselves are left as written, as a record.
 
 Files and commands named in the findings have changed:
 
@@ -42,8 +42,8 @@ Files and commands named in the findings have changed:
 
 | Finding | Status |
 |---|---|
-| 2.1 Conjured items are missing | Open: step 6 |
-| 2.2 Item types matched by exact, full name | Open: needs a decision (see step 6, open point) |
+| 2.1 Conjured items are missing | Resolved in step 6: Conjured items lose quality twice as fast as normal items |
+| 2.2 Item types matched by exact, full name | Partly resolved in step 6: Conjured items are matched on the prefix `Conjured`. Aged Brie, Backstage passes and Sulfuras are still matched on their exact name |
 | 2.3 `updateQuality` is one nested block | Resolved in step 5: one flat function per category |
 | 2.4 Bounds applied per step, not enforced | Open: the behaviour is pinned by tests since step 4, including a grid test over 4,845 combinations, but not fixed by the plan |
 | 2.5 Magic numbers | Resolved in step 5: named constants, with thresholds written as 10 and 5 days |
@@ -59,7 +59,7 @@ Files and commands named in the findings have changed:
 |---|---|
 | 3.1 The unit tests are placeholders | Resolved in step 4: `test/unit/gilded-rose.spec.ts` holds 54 named tests |
 | 3.2 All real coverage comes from one 30-day run | Resolved in step 4: the unit tests alone cover `app/gilded-rose.ts` at 100% and detect all 55 mutations |
-| 3.3 Cases the snapshot does not cover | Resolved in step 4 for out-of-range inputs and name variants, which are pinned by tests. Correct Conjured behaviour comes in step 6 |
+| 3.3 Cases the snapshot does not cover | Resolved in step 4 for out-of-range inputs and name variants, which are pinned by tests. Correct Conjured behaviour is tested since step 6 |
 | 3.4 The approval tests are fragile | Resolved: the end-to-end test launches the program as a separate process and reads its output, with no patching of `console.log` or `process.argv` |
 | 3.5 The golden-master script has side effects | Mostly resolved: the report is a function that returns text (`buildReport` in `app/report.ts`). A non-numeric argument to `npm start` is still not rejected |
 | 3.6 The three runners repeat the same scenarios | Resolved in step 1 |
