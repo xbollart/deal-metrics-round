@@ -2,6 +2,8 @@
 
 This project is the Gilded Rose refactoring kata in TypeScript. The rules of the kata are in [doc/GildedRoseRequirements.md](doc/GildedRoseRequirements.md).
 
+How the system works today is described in [doc/system.md](doc/system.md).
+
 ## Requirements
 
 Node.js 26 or later. The version used for development is in `.nvmrc`:
@@ -42,7 +44,7 @@ test/
     __snapshots__/        expected output of the 30-day run
 scripts/
   mutation-check.mjs      checks that the unit tests notice small changes of the rules
-doc/                      requirements, code review and refactor plan
+doc/                      system documentation, requirements, code review and refactor plan
 .github/workflows/ci.yml  runs the checks on every push and pull request
 ```
 
